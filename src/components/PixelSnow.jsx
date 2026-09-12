@@ -18,8 +18,12 @@ import './PixelSnow.css';
 
 function snowPixelSize(width, resolution) {
   const compact = width < 720;
-  const minBlock = compact ? 4 : 2;
+  const minBlock = compact ? 3 : 2;
   return Math.max(minBlock, Math.round(width / Math.max(1, resolution)));
+}
+
+function sharpenCanvas(canvas) {
+  canvas.style.setProperty("image-rendering", "pixelated");
 }
 
 const vertexShader = `
@@ -235,7 +239,9 @@ export default function PixelSnow({
       const renderWidth = Math.max(1, Math.round(w / pixelSize));
       const renderHeight = Math.max(1, Math.round(h / pixelSize));
       renderer.setSize(renderWidth, renderHeight, false);
+      sharpenCanvas(renderer.domElement);
       material.uniforms.uResolution.value.set(renderWidth, renderHeight);
+      material.uniforms.uPixelResolution.value = renderWidth;
       renderOnceRef.current?.();
     }, 100);
   }, []);
@@ -264,6 +270,7 @@ export default function PixelSnow({
     renderer.setPixelRatio(1);
     renderer.setSize(renderWidth, renderHeight, false);
     renderer.setClearColor(0x000000, 0);
+    sharpenCanvas(renderer.domElement);
     container.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
@@ -275,7 +282,7 @@ export default function PixelSnow({
         uResolution: { value: new Vector2(renderWidth, renderHeight) },
         uFlakeSize: { value: flakeSize },
         uMinFlakeSize: { value: minFlakeSize },
-        uPixelResolution: { value: pixelResolution },
+        uPixelResolution: { value: renderWidth },
         uSpeed: { value: speed },
         uDepthFade: { value: depthFade },
         uFarPlane: { value: farPlane },
@@ -360,7 +367,6 @@ export default function PixelSnow({
 
     material.uniforms.uFlakeSize.value = flakeSize;
     material.uniforms.uMinFlakeSize.value = minFlakeSize;
-    material.uniforms.uPixelResolution.value = pixelResolution;
     material.uniforms.uSpeed.value = speed;
     material.uniforms.uDepthFade.value = depthFade;
     material.uniforms.uFarPlane.value = farPlane;

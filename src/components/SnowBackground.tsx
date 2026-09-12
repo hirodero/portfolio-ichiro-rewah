@@ -8,22 +8,22 @@ const PixelSnow = dynamic(() => import("./PixelSnow"), { ssr: false });
 const LightRays = dynamic(() => import("./LightRays"), { ssr: false });
 
 const DESKTOP_SNOW = {
-  pixelResolution: 340,
-  density: 0.68,
-  farPlane: 24,
-  flakeSize: 0.008,
-  minFlakeSize: 1.25,
-  depthFade: 10,
-  brightness: 1.15
+  pixelResolution: 480,
+  density: 0.32,
+  farPlane: 16,
+  flakeSize: 0.011,
+  minFlakeSize: 1.6,
+  depthFade: 6.5,
+  brightness: 1.2
 };
 
 const MOBILE_SNOW = {
-  pixelResolution: 120,
-  density: 0.4,
-  farPlane: 16,
-  flakeSize: 0.01,
-  minFlakeSize: 1.45,
-  depthFade: 8,
+  pixelResolution: 200,
+  density: 0.22,
+  farPlane: 12,
+  flakeSize: 0.013,
+  minFlakeSize: 1.7,
+  depthFade: 5.5,
   brightness: 1.22
 };
 
