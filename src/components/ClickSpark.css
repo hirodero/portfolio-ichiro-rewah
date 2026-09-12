@@ -1,0 +1,16 @@
+.click-spark {
+  position: relative;
+  width: 100%;
+  min-height: 100dvh;
+}
+
+.click-spark-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  width: 100%;
+  height: 100%;
+  display: block;
+  user-select: none;
+  pointer-events: none;
+}

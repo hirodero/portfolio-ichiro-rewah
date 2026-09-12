@@ -1,0 +1,191 @@
+.icon-btns {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 28px 42px;
+  margin: 0 auto;
+  padding: 8px 0 4px;
+  overflow: visible;
+}
+
+.icon-btn {
+  --float-y: 0px;
+  background-color: transparent;
+  outline: none;
+  position: relative;
+  width: 4.4em;
+  height: 4.4em;
+  perspective: 24em;
+  transform-style: preserve-3d;
+  -webkit-tap-highlight-color: transparent;
+  border: none;
+  cursor: default;
+  animation: toolkit-float 7.5s ease-in-out infinite alternate;
+}
+
+.icon-btn__back,
+.icon-btn__front,
+.icon-btn__label {
+  transition:
+    opacity 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.35s ease,
+    box-shadow 0.35s ease;
+}
+
+.icon-btn__back,
+.icon-btn__front {
+  border-radius: 1.15em;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.icon-btn__back {
+  top: -6px;
+  left: 7px;
+  width: calc(100% + 4px);
+  height: calc(100% + 4px);
+  opacity: 0.42;
+  box-shadow: 0.35em -0.3em 0.7em hsla(270, 16%, 8%, 0.28);
+  display: block;
+  transform: rotate(8deg) translate3d(0, var(--float-y), 0);
+  transform-origin: 100% 100%;
+  will-change: transform;
+}
+
+.icon-btn__front {
+  background:
+    linear-gradient(180deg, hsla(0, 0%, 100%, 0.09), transparent 42%),
+    hsla(270, 14%, 12%, 0.62);
+  border: 1px solid #6f647c66;
+  box-shadow: 0 0 0 0.08em hsla(0, 0%, 100%, 0.14) inset;
+  backdrop-filter: blur(0.7em);
+  -webkit-backdrop-filter: blur(0.7em);
+  display: flex;
+  transform: translate3d(0, var(--float-y), 0);
+  transform-origin: 80% 50%;
+  will-change: transform;
+}
+
+.icon-btn__icon {
+  margin: auto;
+  width: 1.55em;
+  height: 1.55em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #efe8f6;
+  filter: brightness(0.94);
+  transition: filter 0.35s ease;
+}
+
+.icon-btn__icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.icon-btn__label {
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-align: center;
+  line-height: 1.4;
+  color: #c8bfd4;
+  opacity: 0;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  left: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+}
+
+.icon-btn:focus-visible .icon-btn__back,
+.icon-btn:hover .icon-btn__back {
+  transform: rotate(8deg) translate3d(3px, calc(var(--float-y) - 2px), 0);
+}
+
+.icon-btn:focus-visible .icon-btn__front,
+.icon-btn:hover .icon-btn__front {
+  transform: translate3d(-2px, calc(var(--float-y) + 2px), 0) scale(1.03);
+  border-color: #8d7ea066;
+  box-shadow:
+    0 0 0 0.08em hsla(0, 0%, 100%, 0.2) inset,
+    0 10px 22px #09060e40;
+}
+
+.icon-btn:focus-visible .icon-btn__icon,
+.icon-btn:hover .icon-btn__icon {
+  filter: brightness(1.12);
+}
+
+.icon-btn:focus-visible .icon-btn__label,
+.icon-btn:hover .icon-btn__label {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.icon-btn.is-a { animation-delay: 0s; --float-y: -2px; }
+.icon-btn.is-b { animation-delay: -1.4s; --float-y: 3px; }
+.icon-btn.is-c { animation-delay: -2.6s; --float-y: 0px; }
+.icon-btn.is-d { animation-delay: -0.8s; --float-y: 6px; }
+.icon-btn.is-e { animation-delay: -3.2s; --float-y: -1px; }
+.icon-btn.is-f { animation-delay: -2s; --float-y: 4px; }
+.icon-btn.is-g { animation-delay: -4s; --float-y: 8px; }
+.icon-btn.is-h { animation-delay: -1.1s; --float-y: 2px; }
+
+@keyframes toolkit-float {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(0, -3px, 0); }
+}
+
+@media (max-width: 700px) {
+  .icon-btns {
+    gap: 20px 22px;
+    max-width: none;
+  }
+
+  .icon-btn {
+    width: 3.8em;
+    height: 3.8em;
+  }
+
+  .icon-btn.is-a,
+  .icon-btn.is-b,
+  .icon-btn.is-c,
+  .icon-btn.is-d,
+  .icon-btn.is-e,
+  .icon-btn.is-f,
+  .icon-btn.is-g,
+  .icon-btn.is-h {
+    --float-y: 0px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .icon-btn {
+    animation: none;
+  }
+
+  .icon-btn.is-a,
+  .icon-btn.is-b,
+  .icon-btn.is-c,
+  .icon-btn.is-d,
+  .icon-btn.is-e,
+  .icon-btn.is-f,
+  .icon-btn.is-g,
+  .icon-btn.is-h,
+  .icon-btn:hover .icon-btn__back,
+  .icon-btn:focus-visible .icon-btn__back,
+  .icon-btn:hover .icon-btn__front,
+  .icon-btn:focus-visible .icon-btn__front {
+    --float-y: 0px;
+    transform: none;
+  }
+}

@@ -1,0 +1,14 @@
+.hero-splash-cursor {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.hero-splash-cursor canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}

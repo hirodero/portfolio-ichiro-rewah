@@ -1,0 +1,153 @@
+.paimon-portal {
+  position: absolute;
+  z-index: 1;
+  width: 180px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(circle, #d9d4ff18 8%, #a69aec38 35%, #e4ddff66 46%, #b4a5ec22 55%, transparent 72%);
+}
+.paimon-portal::before,
+.paimon-portal::after {
+  content: "";
+  position: absolute;
+  inset: 17%;
+  border-radius: 50%;
+  border: 1px solid #e7e1ff9c;
+  box-shadow: 0 0 14px #b7a4ec55, inset 0 0 10px #b7a4ec33;
+}
+.paimon-portal::after {
+  inset: 10%;
+  border-color: #d8cdff40 transparent;
+  transform: rotate(35deg);
+  box-shadow: none;
+}
+
+.paimon-trail-splash {
+  z-index: 1;
+  opacity: .45;
+}
+
+.flying-paimon {
+  opacity: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  width: 240px;
+  aspect-ratio: 3 / 2;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.flying-paimon img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity 0.18s linear;
+}
+
+.flying-paimon img.is-on {
+  opacity: 1;
+}
+
+.paimon-scarf-sparkles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.paimon-star {
+  position: absolute;
+  width: var(--star-size);
+  height: var(--star-size);
+  transform: translate(-50%, -50%);
+}
+.paimon-star-flare,
+.paimon-star-rays,
+.paimon-star-spark {
+  position: absolute;
+  display: block;
+  opacity: 0;
+  animation-duration: var(--star-duration);
+  animation-delay: var(--star-delay);
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-play-state: var(--paimon-animation-state, paused);
+}
+.paimon-star-flare {
+  inset: 0;
+  background: #f3f3ff;
+  clip-path: polygon(50% 0, 61% 38%, 100% 50%, 61% 62%, 50% 100%, 39% 62%, 0 50%, 39% 38%);
+  animation-name: paimon-star-twinkle;
+}
+.paimon-star-spark {
+  left: 50%;
+  top: 50%;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #f4f4ff;
+  box-shadow: 0 0 5px #c7c9ffb3;
+  animation-name: paimon-star-scatter;
+}
+.paimon-star-rays {
+  inset: -135%;
+  --ray-angle: 0deg;
+  animation-name: paimon-star-rays;
+}
+.paimon-star-rays-diagonal {
+  inset: -85%;
+  --ray-angle: 45deg;
+}
+.paimon-star-rays::before,
+.paimon-star-rays::after {
+  content: "";
+  position: absolute;
+  background: linear-gradient(90deg, transparent, #d9ddff66 25%, #ffffffed 50%, #d9ddff66 75%, transparent);
+}
+.paimon-star-rays::before {
+  left: 0;
+  top: calc(50% - .5px);
+  width: 100%;
+  height: 1px;
+}
+.paimon-star-rays::after {
+  left: calc(50% - .5px);
+  top: 0;
+  width: 1px;
+  height: 100%;
+  background: linear-gradient(transparent, #d9ddff66 25%, #ffffffed 50%, #d9ddff66 75%, transparent);
+}
+@keyframes paimon-star-twinkle {
+  0%, 100% { opacity: .15; transform: scale(.6) rotate(0deg); }
+  28% { opacity: .45; transform: scale(.9) rotate(5deg); }
+  40% { opacity: 1; transform: scale(1.25) rotate(8deg); }
+  55% { opacity: .45; transform: scale(.9) rotate(12deg); }
+  68% { opacity: .85; transform: scale(1.1) rotate(16deg); }
+  86% { opacity: .2; transform: scale(.7) rotate(20deg); }
+}
+@keyframes paimon-star-rays {
+  0%, 18%, 100% { opacity: 0; transform: rotate(var(--ray-angle)) scale(.45); }
+  40% { opacity: .8; transform: rotate(var(--ray-angle)) scale(1); }
+  62% { opacity: .3; transform: rotate(var(--ray-angle)) scale(.85); }
+  78% { opacity: .5; transform: rotate(var(--ray-angle)) scale(1.05); }
+  94% { opacity: 0; transform: rotate(var(--ray-angle)) scale(1.1); }
+}
+@keyframes paimon-star-scatter {
+  0%, 7% { opacity: 0; transform: translate(-50%, -50%) scale(.4); }
+  20% { opacity: .95; }
+  62% { opacity: .7; }
+  94%, 100% { opacity: 0; transform: translate(var(--spark-x), var(--spark-y)) scale(.15); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flying-paimon,
+  .paimon-portal,
+  .paimon-trail-splash {
+    display: none;
+  }
+}

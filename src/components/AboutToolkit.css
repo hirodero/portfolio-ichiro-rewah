@@ -1,0 +1,59 @@
+.about-toolkit {
+  grid-area: toolkit;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid #2c2333;
+}
+
+.about-toolkit-label {
+  margin: 0 0 18px;
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: #a69aae;
+}
+
+.about-toolkit-icons {
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 22px 28px;
+  max-width: none;
+  margin: 0;
+  padding: 6px 8px 14px 0;
+}
+
+.about-toolkit .icon-btn.is-a,
+.about-toolkit .icon-btn.is-b,
+.about-toolkit .icon-btn.is-c,
+.about-toolkit .icon-btn.is-d,
+.about-toolkit .icon-btn.is-e,
+.about-toolkit .icon-btn.is-f,
+.about-toolkit .icon-btn.is-g,
+.about-toolkit .icon-btn.is-h {
+  --float-y: 0px;
+}
+
+.about-toolkit-capabilities {
+  margin: 12px 0 0;
+  max-width: none;
+  font-size: 11px;
+  line-height: 1.75;
+  letter-spacing: 0.2px;
+  color: #8d8298;
+}
+
+@media (max-width: 700px) {
+  .about-toolkit {
+    margin-top: 4px;
+    padding-top: 20px;
+  }
+
+  .about-toolkit-icons {
+    justify-content: flex-start;
+    padding: 4px 0 24px;
+  }
+}
