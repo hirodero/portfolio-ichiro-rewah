@@ -1,5 +1,6 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect } from 'react';
 import { Renderer, Program, Triangle, Mesh } from 'ogl';
+import { registerHeroGpu } from '@/lib/hero-focus';
 import './LightRays.css';
 
 const DEFAULT_COLOR = '#ffffff';
@@ -55,8 +56,10 @@ const LightRays = ({
   const animationIdRef = useRef(null);
   const meshRef = useRef(null);
   const cleanupFunctionRef = useRef(null);
-  const [isVisible, setIsVisible] = useState(false);
   const observerRef = useRef(null);
+  const isVisibleRef = useRef(false);
+  const startLoopRef = useRef(() => {});
+  const stopLoopRef = useRef(() => {});
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -64,9 +67,11 @@ const LightRays = ({
     observerRef.current = new IntersectionObserver(
       entries => {
         const entry = entries[0];
-        setIsVisible(entry.isIntersecting);
+        isVisibleRef.current = entry.isIntersecting && entry.intersectionRatio >= 0.32;
+        if (isVisibleRef.current) startLoopRef.current();
+        else stopLoopRef.current();
       },
-      { threshold: 0.1 }
+      { threshold: [0, 0.32, 0.6] }
     );
 
     observerRef.current.observe(containerRef.current);
@@ -80,7 +85,7 @@ const LightRays = ({
   }, []);
 
   useEffect(() => {
-    if (!isVisible || !containerRef.current) return;
+    if (!containerRef.current) return;
 
     if (cleanupFunctionRef.current) {
       cleanupFunctionRef.current();
@@ -95,7 +100,7 @@ const LightRays = ({
       if (!containerRef.current) return;
 
       const renderer = new Renderer({
-        dpr: Math.min(window.devicePixelRatio, 2),
+        dpr: 1,
         alpha: true
       });
       rendererRef.current = renderer;
@@ -254,7 +259,7 @@ void main() {
       const updatePlacement = () => {
         if (!containerRef.current || !renderer) return;
 
-        renderer.dpr = Math.min(window.devicePixelRatio, 2);
+        renderer.dpr = 1;
 
         const { clientWidth: wCSS, clientHeight: hCSS } = containerRef.current;
         renderer.setSize(wCSS, hCSS);
@@ -270,10 +275,9 @@ void main() {
         uniforms.rayDir.value = dir;
       };
 
-      const loop = t => {
-        if (!rendererRef.current || !uniformsRef.current || !meshRef.current) {
-          return;
-        }
+      const draw = t => {
+        if (!rendererRef.current || !uniformsRef.current || !meshRef.current) return;
+        if (!isVisibleRef.current || document.hidden) return;
 
         uniforms.iTime.value = t * 0.001;
 
@@ -288,18 +292,26 @@ void main() {
 
         try {
           renderer.render({ scene: mesh });
-          animationIdRef.current = requestAnimationFrame(loop);
         } catch (error) {
           console.warn('WebGL rendering error:', error);
-          return;
         }
       };
 
+      let unregisterGpu = () => {};
+      startLoopRef.current = () => {
+        unregisterGpu();
+        unregisterGpu = registerHeroGpu('rays', draw);
+      };
+      stopLoopRef.current = () => {
+        unregisterGpu();
+        unregisterGpu = () => {};
+      };
       window.addEventListener('resize', updatePlacement);
       updatePlacement();
-      animationIdRef.current = requestAnimationFrame(loop);
+      if (isVisibleRef.current) startLoopRef.current();
 
       cleanupFunctionRef.current = () => {
+        stopLoopRef.current();
         if (animationIdRef.current) {
           cancelAnimationFrame(animationIdRef.current);
           animationIdRef.current = null;
@@ -338,7 +350,6 @@ void main() {
       }
     };
   }, [
-    isVisible,
     raysOrigin,
     raysColor,
     raysSpeed,

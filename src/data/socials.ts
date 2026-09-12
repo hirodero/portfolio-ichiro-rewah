@@ -12,7 +12,7 @@ export const socials: SocialLink[] = [
   },
   {
     name: "linkedin",
-    href: "https://www.linkedin.com/in/ichirorewah/",
+    href: "https://www.linkedin.com/in/ichiro-rewah-b78b21278/",
     label: "LinkedIn"
   }
 ];

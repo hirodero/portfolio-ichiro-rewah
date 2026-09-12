@@ -1,3 +1,13 @@
+.paimon-wind {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  transform: translate3d(0, 0, 0);
+  transform-origin: 58% 38%;
+  will-change: transform;
+}
+
 .paimon-portal {
   position: absolute;
   z-index: 1;
@@ -145,6 +155,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .paimon-wind,
   .flying-paimon,
   .paimon-portal,
   .paimon-trail-splash {

@@ -33,7 +33,8 @@ export default function ClickSpark({
 }: ClickSparkProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sparksRef = useRef<Spark[]>([]);
-  const startTimeRef = useRef<number | null>(null);
+  const animationIdRef = useRef(0);
+  const drawRef = useRef<(timestamp: number) => void>(() => {});
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -83,13 +84,10 @@ export default function ClickSpark({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d", { alpha: true });
     if (!ctx) return;
 
-    let animationId = 0;
-
     const draw = (timestamp: number) => {
-      if (!startTimeRef.current) startTimeRef.current = timestamp;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       sparksRef.current = sparksRef.current.filter(spark => {
@@ -116,13 +114,21 @@ export default function ClickSpark({
         return true;
       });
 
-      animationId = requestAnimationFrame(draw);
+      if (sparksRef.current.length > 0) {
+        animationIdRef.current = requestAnimationFrame(draw);
+        return;
+      }
+
+      animationIdRef.current = 0;
+      canvas.classList.remove("is-active");
     };
 
-    animationId = requestAnimationFrame(draw);
+    drawRef.current = draw;
 
     return () => {
-      cancelAnimationFrame(animationId);
+      cancelAnimationFrame(animationIdRef.current);
+      animationIdRef.current = 0;
+      canvas.classList.remove("is-active");
     };
   }, [sparkColor, sparkSize, sparkRadius, duration, easeFunc, extraScale]);
 
@@ -144,6 +150,11 @@ export default function ClickSpark({
         startTime: now
       }))
     );
+
+    canvas.classList.add("is-active");
+    if (!animationIdRef.current) {
+      animationIdRef.current = requestAnimationFrame(drawRef.current);
+    }
   }
 
   return (

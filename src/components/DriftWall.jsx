@@ -45,7 +45,8 @@ const DriftWall = ({
   overlayColor = "#060010",
   scale = 1.18,
   className = "",
-  style = {}
+  style = {},
+  startDelay = 0
 }) => {
   const containerRef = useRef(null);
   const planeRef = useRef(null);
@@ -59,6 +60,7 @@ const DriftWall = ({
   const pointerRef = useRef({ x: 0, y: 0 });
   const pointerDampedRef = useRef({ x: 0, y: 0 });
   const lastTsRef = useRef(null);
+  const isVisibleRef = useRef(true);
 
   const [containerHeight, setContainerHeight] = useState(600);
   const [reduced, setReduced] = useState(false);
@@ -81,7 +83,7 @@ const DriftWall = ({
     const unit = tileHeight + gap;
     return columnItems.map(col => {
       const copyHeight = Math.max(unit, col.length * unit);
-      const copies = Math.max(2, Math.ceil((containerHeight * 1.6) / copyHeight) + 1);
+      const copies = Math.max(2, Math.min(3, Math.ceil(containerHeight / copyHeight) + 1));
       return { copyHeight, copies };
     });
   }, [columnItems, tileHeight, gap, containerHeight]);
@@ -121,7 +123,14 @@ const DriftWall = ({
   );
 
   useEffect(() => {
+    const node = containerRef.current;
     const animate = ts => {
+      if (!isVisibleRef.current) {
+        rafRef.current = null;
+        lastTsRef.current = null;
+        return;
+      }
+
       if (lastTsRef.current === null) lastTsRef.current = ts;
       const dt = Math.min(0.05, Math.max(0, ts - lastTsRef.current) / 1000);
       lastTsRef.current = ts;
@@ -162,13 +171,32 @@ const DriftWall = ({
       rafRef.current = requestAnimationFrame(animate);
     };
 
-    rafRef.current = requestAnimationFrame(animate);
+    let delayTimer = 0;
+    const kick = () => {
+      if (!isVisibleRef.current || rafRef.current) return;
+      lastTsRef.current = null;
+      rafRef.current = requestAnimationFrame(animate);
+    };
+
+    const io = node
+      ? new IntersectionObserver(([entry]) => {
+          isVisibleRef.current = entry.isIntersecting;
+          if (!entry.isIntersecting) return;
+          if (startDelay > 0) delayTimer = window.setTimeout(kick, startDelay);
+          else kick();
+        }, { rootMargin: "80px 0px" })
+      : null;
+    if (node && io) io.observe(node);
+    if (startDelay <= 0) kick();
+
     return () => {
+      io?.disconnect();
+      if (delayTimer) window.clearTimeout(delayTimer);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
       lastTsRef.current = null;
     };
-  }, [baseVelocities, columnMeta, pauseOnHover, parallax, reduced, applyPlaneTransform]);
+  }, [baseVelocities, columnMeta, pauseOnHover, parallax, reduced, applyPlaneTransform, startDelay]);
 
   const cssVars = useMemo(
     () => ({
@@ -202,7 +230,7 @@ const DriftWall = ({
                   col.map((item, itemIndex) => (
                     <div className="drift-wall__tile" key={`${c}-${copyIndex}-${itemIndex}`}>
                       <span className="drift-wall__inner">
-                        <img src={item.image} alt="" />
+                        <img src={item.image} alt="" decoding="async" />
                         <span className="drift-wall__overlay" />
                       </span>
                     </div>

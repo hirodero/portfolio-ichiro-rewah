@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="720" viewBox="0 0 1180 720" role="img" aria-hidden="true">
+  <rect width="1180" height="720" fill="#070707"/>
+  <rect x="0" y="0" width="1180" height="720" fill="url(#glow)"/>
+  <defs>
+    <radialGradient id="glow" cx="32%" cy="28%" r="58%">
+      <stop offset="0" stop-color="#f59e0b" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#070707" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <text x="88" y="338" fill="#f5b400" font-family="Arial, Helvetica, sans-serif" font-size="78" font-weight="700">CuanVerse</text>
+  <text x="88" y="392" fill="#ffffff" fill-opacity=".72" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="600">Belajar. Bangun. Berkembang.</text>
+</svg>

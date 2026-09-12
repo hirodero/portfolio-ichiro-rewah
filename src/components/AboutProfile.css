@@ -98,14 +98,21 @@
     rgba(4, 3, 8, 0.42) 100%
   );
 }
+.profile-drift .drift-wall__plane { filter: saturate(0.92); }
+.profile-drift .drift-wall__tile img { filter: none; }
 .profile-drift .drift-wall__col:nth-child(1) { transform: translateZ(26px); }
 .profile-drift .drift-wall__col:nth-child(2) { transform: translateZ(10px); }
 .profile-drift .drift-wall__col:nth-child(3) { transform: translateZ(-10px); }
 .profile-drift .drift-wall__col:nth-child(4) { transform: translateZ(-26px); }
-.profile-drift .drift-wall__col:nth-child(1) .drift-wall__inner { filter: brightness(1.1); }
-.profile-drift .drift-wall__col:nth-child(2) .drift-wall__inner { filter: brightness(1.02); }
-.profile-drift .drift-wall__col:nth-child(3) .drift-wall__inner { filter: brightness(0.88); }
-.profile-drift .drift-wall__col:nth-child(4) .drift-wall__inner { filter: brightness(0.76); }
+.profile-drift .drift-wall__col:nth-child(1) .drift-wall__inner { opacity: 1; }
+.profile-drift .drift-wall__col:nth-child(2) .drift-wall__inner { opacity: 0.95; }
+.profile-drift .drift-wall__col:nth-child(3) .drift-wall__inner { opacity: 0.82; }
+.profile-drift .drift-wall__col:nth-child(4) .drift-wall__inner { opacity: 0.7; }
+
+.about-profile-card {
+  position: relative;
+  z-index: 1;
+}
 
 .about-profile .pc-card-wrapper {
   --card-radius: 18px;
@@ -406,7 +413,6 @@
     translate(calc((var(--au-x) - .5) * 56px), calc((var(--au-y) - .5) * 40px))
     scale(calc(1 + var(--au-splash) * .16));
   transform-origin: center;
-  will-change: transform;
 }
 .about-copy .aurora-cursor-splash {
   position: absolute;

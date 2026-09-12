@@ -6,19 +6,20 @@ import DriftWall from "./DriftWall";
 import "./AboutProfile.css";
 
 const DRIFT_ITEMS = [
-  { image: "/images/drift/kerjawoy-jobs.png", title: "KerjaWoy jobs" },
-  { image: "/images/drift/kerjawoy-landing.png", title: "KerjaWoy" },
-  { image: "/images/drift/zenleap-english.png", title: "ZenLEAP English" },
-  { image: "/images/drift/zenleap-quiz.png", title: "ZenLEAP program" },
+  { image: "/images/drift/kerjawoy-jobs.jpg", title: "KerjaWoy jobs" },
+  { image: "/images/drift/kerjawoy-landing.jpg", title: "KerjaWoy" },
+  { image: "/images/drift/zenleap-english.jpg", title: "ZenLEAP English" },
+  { image: "/images/drift/zenleap-quiz.jpg", title: "ZenLEAP program" },
   { image: "/images/drift/zenleap-courses.jpg", title: "ZenLEAP courses" },
   { image: "/images/drift/zenvokus.jpg", title: "ZenVokus" },
-  { image: "/images/drift/zenvokus-practice.png", title: "Quick practice" },
+  { image: "/images/drift/zenvokus-practice.jpg", title: "Quick practice" },
   { image: "/images/drift/genz-berbakti.jpg", title: "Genera-Z Berbakti" },
   { image: "/images/drift/ichiro-presenting.jpg", title: "Speaking" }
 ];
 
 export default function AboutProfile() {
   const [tiltEnabled, setTiltEnabled] = useState(false);
+  const [showDrift, setShowDrift] = useState(true);
   const profileRef = useRef<HTMLElement>(null);
 
   const syncRoomFlashOrigin = useCallback(() => {
@@ -40,6 +41,22 @@ export default function AboutProfile() {
     const update = () => setTiltEnabled(preference.matches);
     update();
     preference.addEventListener("change", update);
+    const isLite = window.self !== window.top || new URLSearchParams(window.location.search).has("preview");
+    setShowDrift(!isLite);
+
+    const warm = () => {
+      DRIFT_ITEMS.forEach(({ image }) => {
+        const img = new Image();
+        img.decoding = "async";
+        img.src = image;
+      });
+      const avatar = new Image();
+      avatar.decoding = "async";
+      avatar.src = "/images/ichiro-rewah.jpg";
+    };
+    if (document.readyState === "complete") warm();
+    else window.addEventListener("load", warm, { once: true });
+
     return () => preference.removeEventListener("change", update);
   }, []);
 
@@ -63,7 +80,8 @@ export default function AboutProfile() {
     };
   }, [syncRoomFlashOrigin]);
 
-  return <aside ref={profileRef} className="about-profile reveal" aria-label="Meet Ichiro Rewah">
+  return <aside ref={profileRef} className="about-profile" aria-label="Meet Ichiro Rewah">
+    {showDrift ? (
     <div className="profile-drift">
       <DriftWall
         items={DRIFT_ITEMS}
@@ -87,6 +105,8 @@ export default function AboutProfile() {
         scale={0.78}
       />
     </div>
+    ) : null}
+    <div className="about-profile-card reveal">
     <ProfileCard
       name="Ichiro Rewah"
       title="Software Developer"
@@ -108,5 +128,6 @@ export default function AboutProfile() {
       behindGlowSize="65%"
       innerGradient="linear-gradient(145deg,#60496e8c 0%,#71C4FF44 100%)"
     />
+    </div>
   </aside>;
 }

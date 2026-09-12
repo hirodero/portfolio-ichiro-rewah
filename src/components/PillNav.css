@@ -143,17 +143,35 @@
 }
 
 @media (max-width: 700px) {
+  .site-header .pill-nav {
+    --nav-h: 36px;
+    --pill-pad-x: 10px;
+    --pill-gap: 6px;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .site-header .brand {
+    min-width: 0;
+    gap: 8px;
+  }
+
   .site-header .brand a.pill {
     display: inline-flex;
-    font-size: 16px;
-    height: 40px;
-    padding: 0 12px;
+    font-size: 14px;
+    height: 36px;
+    padding: 0 10px;
+  }
+
+  .site-header .pill-nav-items {
+    min-width: 0;
   }
 
   .site-header nav .pill-list a.pill {
     display: inline-flex;
-    --pill-pad-x: 10px;
-    height: 36px;
+    --pill-pad-x: 9px;
+    height: 34px;
+    font-size: 12px;
   }
 
   .site-header .pill-list > li:last-child {

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { Renderer, Program, Mesh, Triangle } from "ogl";
+import { isHeroScrolling } from "@/lib/hero-focus";
 import "./GradientWaves.css";
 
 const hexToRgb = hex => {
@@ -151,10 +152,15 @@ const GradientWaves = ({
   parallaxStrength = 0.5,
   grain = true,
   grainIntensity = 0.05,
+  maxDpr = 2,
+  resolutionScale = 1,
+  paused = false,
   className = ""
 }) => {
   const containerRef = useRef(null);
   const enableMouseRef = useRef(mouseInteraction);
+  const pausedRef = useRef(paused);
+  pausedRef.current = paused;
 
   useEffect(() => {
     const container = containerRef.current;
@@ -165,7 +171,7 @@ const GradientWaves = ({
       alpha: true,
       premultipliedAlpha: true,
       antialias: false,
-      dpr: Math.min(window.devicePixelRatio || 1, 2)
+      dpr: Math.min(window.devicePixelRatio || 1, maxDpr)
     });
 
     const gl = renderer.gl;
@@ -209,12 +215,12 @@ const GradientWaves = ({
     });
 
     const mesh = new Mesh(gl, { geometry, program });
-    ctxMap.set(container, { renderer, program, mesh });
+    ctxMap.set(container, { renderer, program, mesh, tryStart: () => {}, tryStop: () => {} });
 
     const setSize = () => {
       const rect = container.getBoundingClientRect();
-      const w = Math.max(1, Math.floor(rect.width));
-      const h = Math.max(1, Math.floor(rect.height));
+      const w = Math.max(1, Math.floor(rect.width * resolutionScale));
+      const h = Math.max(1, Math.floor(rect.height * resolutionScale));
       renderer.setSize(w, h);
       const res = program.uniforms.iResolution.value;
       res[0] = gl.drawingBufferWidth;
@@ -247,7 +253,14 @@ const GradientWaves = ({
     let isPageVisible = !document.hidden;
     const t0 = performance.now();
 
+    let lastDraw = 0;
     const loop = t => {
+      const gap = isHeroScrolling() ? 40 : 32;
+      if (t - lastDraw < gap) {
+        raf = requestAnimationFrame(loop);
+        return;
+      }
+      lastDraw = t;
       program.uniforms.iTime.value = (t - t0) * 0.001;
       const tx = enableMouseRef.current ? targetMouse[0] : 0.5;
       const ty = enableMouseRef.current ? targetMouse[1] : 0.5;
@@ -260,6 +273,7 @@ const GradientWaves = ({
     };
 
     const tryStart = () => {
+      if (pausedRef.current) return;
       if (isVisible && isPageVisible && raf === 0) raf = requestAnimationFrame(loop);
     };
     const tryStop = () => {
@@ -268,13 +282,18 @@ const GradientWaves = ({
         raf = 0;
       }
     };
+    const ctx = ctxMap.get(container);
+    if (ctx) {
+      ctx.tryStart = tryStart;
+      ctx.tryStop = tryStop;
+    }
 
     const io = new IntersectionObserver(
       ([entry]) => {
-        isVisible = entry.isIntersecting;
+        isVisible = entry.intersectionRatio >= 0.22;
         isVisible ? tryStart() : tryStop();
       },
-      { threshold: 0 }
+      { threshold: [0, 0.22, 0.45] }
     );
     io.observe(container);
 
@@ -363,8 +382,19 @@ const GradientWaves = ({
     grain,
     grainIntensity,
     mouseInteraction,
-    parallaxStrength
+    parallaxStrength,
+    maxDpr,
+    resolutionScale
   ]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const ctx = ctxMap.get(container);
+    if (!ctx) return;
+    if (paused) ctx.tryStop();
+    else ctx.tryStart();
+  }, [paused]);
 
   return <div ref={containerRef} className={`gradient-waves-container ${className}`.trim()} />;
 };

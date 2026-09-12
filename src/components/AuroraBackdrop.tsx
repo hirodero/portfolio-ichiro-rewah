@@ -18,6 +18,7 @@ export default function AuroraBackdrop({ idPrefix, wide = false }: { idPrefix: s
     let currentY = 0.5;
     let splash = 0;
     let frame = 0;
+    let isVisible = true;
 
     const onMove = (event: PointerEvent) => {
       const rect = host.getBoundingClientRect();
@@ -29,6 +30,10 @@ export default function AuroraBackdrop({ idPrefix, wide = false }: { idPrefix: s
     };
 
     const tick = () => {
+      if (!isVisible) {
+        frame = 0;
+        return;
+      }
       currentX += (targetX - currentX) * 0.1;
       currentY += (targetY - currentY) * 0.1;
       splash *= 0.93;
@@ -38,10 +43,17 @@ export default function AuroraBackdrop({ idPrefix, wide = false }: { idPrefix: s
       frame = requestAnimationFrame(tick);
     };
 
+    const io = new IntersectionObserver(([entry]) => {
+      isVisible = entry.isIntersecting;
+      if (isVisible && !frame) frame = requestAnimationFrame(tick);
+    });
+    io.observe(host);
+
     host.addEventListener("pointermove", onMove, { passive: true });
     frame = requestAnimationFrame(tick);
     return () => {
       host.removeEventListener("pointermove", onMove);
+      io.disconnect();
       cancelAnimationFrame(frame);
     };
   }, [wide]);

@@ -42,63 +42,70 @@ const socialIcons = {
   linkedin: LinkedInIcon
 } as const;
 
-export default function Home() {
+interface HomeProps {
+  searchParams: Promise<{ preview?: string }>;
+}
+
+export default async function Home({ searchParams }: HomeProps) {
+  const { preview } = await searchParams;
+  const isPreview = preview === "1";
+
   return (
     <main id="top">
       <a className="skip-link" href="#content">Skip to content</a>
       <SiteHeader />
       <SectionReveal className="hero-shell" startInView aria-labelledby="hero-title">
-        <SnowBackground />
-        <HeroBeacons />
+        {isPreview ? null : <SnowBackground />}
+        {isPreview ? null : <HeroBeacons />}
         <div className="site-header-slot" aria-hidden="true" />
         <div className="hero-content" id="content">
           <div className="intro-pill reveal">
             <span className="status-dot" />
-            <HeroText text="A little about me, a lot about what I build" density={2} scatter={36} />
+            <HeroText text="A little about me, a lot about what I build" particles={false} />
           </div>
           <p className="eyebrow reveal">
-            <HeroText text="HELLO, I’M ICHIRO" fontWeight={500} density={2} scatter={28} />
+            <HeroText text="HELLO, I’M ICHIRO" fontWeight={500} particles={false} />
           </p>
           <h1 id="hero-title" className="reveal">
             <HeroText className="hero-title-line" text="Thoughtful code." fontWeight={600} particleSize={2} density={4} scatter={140} gatherDuration={1500} stagger={380} glow />
             <HeroText className="hero-title-line" text="Memorable experiences." fontWeight={600} particleSize={2} density={4} scatter={140} gatherDuration={1500} stagger={380} glow />
           </h1>
           <p className="hero-description reveal">
-            <HeroText className="hero-desc-line" text="Turning ideas into things you can click, explore, and enjoy." density={2} scatter={40} />
-            <HeroText className="hero-desc-line" text="Welcome to my little corner of the internet." density={2} scatter={40} />
+            <HeroText className="hero-desc-line" text="Turning ideas into things you can click, explore, and enjoy." particles={false} />
+            <HeroText className="hero-desc-line" text="Welcome to my little corner of the internet." particles={false} />
           </p>
           <div className="hero-actions reveal">
             <a className="button button-primary" href="#work">
-              <HeroText text="Explore my work" fontWeight={600} color="#15121a" density={2} scatter={24} />
+              <HeroText text="Explore my work" fontWeight={600} color="#15121a" particles={false} />
               <Arrow />
             </a>
             <a className="button button-secondary" href="#about">
-              <HeroText text="More about me" fontWeight={600} density={2} scatter={24} />
+              <HeroText text="More about me" fontWeight={600} particles={false} />
             </a>
           </div>
           <div className="stack reveal">
-            <HeroText text="BUILT WITH" density={2} scatter={20} />
-            <span><b aria-hidden="true">N</b> <HeroText text="Next.js" density={2} scatter={20} /></span>
-            <span><b className="ts-icon" aria-hidden="true">TS</b> <HeroText text="TypeScript" density={2} scatter={20} /></span>
-            <span><b className="react-icon" aria-hidden="true">⚛</b> <HeroText text="React" density={2} scatter={20} /></span>
+            <HeroText text="BUILT WITH" particles={false} />
+            <span><b aria-hidden="true">N</b> <HeroText text="Next.js" particles={false} /></span>
+            <span><b className="ts-icon" aria-hidden="true">TS</b> <HeroText text="TypeScript" particles={false} /></span>
+            <span><b className="react-icon" aria-hidden="true">⚛</b> <HeroText text="React" particles={false} /></span>
           </div>
         </div>
-        <HeroGallery />
+        {isPreview ? null : <HeroGallery />}
         <a className="scroll-cue reveal" href="#about"><span /> Scroll to explore</a>
         <span className="hero-note">
           <span className="reveal">
-            <HeroText text="A work in progress. Just like me." density={2} scatter={22} />
+            <HeroText text="A work in progress. Just like me." particles={false} />
           </span>
         </span>
       </SectionReveal>
 
-      <SectionReveal className="section about-section" id="about" aria-labelledby="about-title">
-        <AboutWaves />
+      <SectionReveal className="section about-section" id="about" aria-labelledby="about-title" latch>
+        {isPreview ? null : <AboutWaves />}
         <p className="eyebrow about-kicker reveal">01 / BEHIND THE SCREEN</p>
         <AboutProfile />
         <div className="about-copy">
           <AuroraBackdrop idPrefix="about-copy" wide />
-          <AuraSplash />
+          {isPreview ? null : <AuraSplash />}
           <h2 id="about-title" className="reveal">Curiosity is<br />part of the process<span>.</span></h2>
           <p className="reveal">I’m Ichiro Rewah. I enjoy bringing ideas to life on the web, with an eye for the details that make an interface feel considered.</p>
           <p className="reveal">This is where I share what I make and what I’m exploring. My approach is simple: stay curious, keep learning, and make each iteration a little better.</p>
@@ -139,7 +146,7 @@ export default function Home() {
             <div className="project-art zenleap-art">
               <LiveSiteFrame
                 src="https://zenleap.id/program/english"
-                fallbackSrc="/images/work/zenleap-english.png"
+                fallbackSrc="/images/work/zenleap-english.jpg"
                 title="ZenLEAP live preview"
               />
               <span className="project-number">03</span>
@@ -159,6 +166,18 @@ export default function Home() {
             <div className="project-info"><div><span className="project-category">CULTURAL PLATFORM · 2026</span><h3>MINAESA</h3></div><span className="project-arrow"><Arrow /></span></div>
             <p>A community-owned digital ecosystem for MAPALUS — connecting UMKM, cultural heritage, and tourism in Kakaskasen Dua.</p><div className="tags"><span>Product</span><span>Web</span></div>
           </a>
+          <a className="project-card reveal" href="https://cuanversedigital.id/" target="_blank" rel="noreferrer" aria-label="Open CuanVerse">
+            <div className="project-art cuanverse-art">
+              <LiveSiteFrame
+                src="https://cuanversedigital.id/"
+                fallbackSrc="/images/work/cuanverse.svg"
+                title="CuanVerse live preview"
+              />
+              <span className="project-number">05</span>
+            </div>
+            <div className="project-info"><div><span className="project-category">VIDEO LEARNING · 2026</span><h3>CuanVerse</h3></div><span className="project-arrow"><Arrow /></span></div>
+            <p>A video-based learning platform designed to complement e-books with structured lessons on personal branding and digital products.</p><div className="tags"><span>Product</span><span>Web</span><span>Learning</span></div>
+          </a>
         </div>
       </SectionReveal>
 
@@ -168,7 +187,7 @@ export default function Home() {
       </TracingBeam>
 
       <SectionReveal className="section contact-section" id="contact" aria-labelledby="contact-title" startInView>
-        <ContactPlasma />
+        {isPreview ? null : <ContactPlasma />}
         <p className="eyebrow reveal">04 / SAY HELLO</p>
         <h2 id="contact-title" className="reveal">Good things start<br />with a conversation<span>.</span></h2>
         <p className="reveal">If something here resonates, I’d like to hear from you.</p>

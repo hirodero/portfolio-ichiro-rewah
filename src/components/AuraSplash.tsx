@@ -7,16 +7,25 @@ const SplashCursor = dynamic(() => import("./SplashCursor"), { ssr: false });
 
 export default function AuraSplash() {
   const [enabled, setEnabled] = useState(false);
+  const [armed, setArmed] = useState(false);
 
   useEffect(() => {
     const preference = window.matchMedia("(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)");
     const update = () => setEnabled(preference.matches);
     update();
     preference.addEventListener("change", update);
-    return () => preference.removeEventListener("change", update);
+
+    const host = document.querySelector(".about-copy");
+    const arm = () => setArmed(true);
+    host?.addEventListener("pointerenter", arm, { once: true });
+
+    return () => {
+      preference.removeEventListener("change", update);
+      host?.removeEventListener("pointerenter", arm);
+    };
   }, []);
 
-  return enabled ? <SplashCursor
+  return enabled && armed ? <SplashCursor
     targetSelector=".about-copy"
     className="aura-splash-cursor"
     DYE_RESOLUTION={512}

@@ -7,7 +7,7 @@ const Plasma = dynamic(() => import("./Plasma"), { ssr: false });
 
 export default function ContactPlasma() {
   const ref = useRef<HTMLDivElement>(null);
-  const [isActive, setIsActive] = useState(false);
+  const [isArmed, setIsArmed] = useState(false);
 
   useEffect(() => {
     const node = ref.current;
@@ -15,9 +15,9 @@ export default function ContactPlasma() {
 
     const io = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) setIsActive(true);
+        if (entry.isIntersecting) setIsArmed(true);
       },
-      { rootMargin: "240px 0px" }
+      { rootMargin: "240px 0px", threshold: 0 }
     );
 
     io.observe(node);
@@ -26,7 +26,7 @@ export default function ContactPlasma() {
 
   return (
     <div ref={ref} className="contact-plasma" aria-hidden="true">
-      {isActive ? (
+      {isArmed ? (
         <Plasma
           color="#c4a8ff"
           speed={0.6}

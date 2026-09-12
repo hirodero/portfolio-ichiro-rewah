@@ -13,11 +13,14 @@
 }
 
 @keyframes section-reveal-up {
-  from {
+  0% {
     opacity: 0;
     transform: translate3d(0, 44px, 0);
   }
-  to {
+  38% {
+    opacity: 1;
+  }
+  100% {
     opacity: 1;
     transform: translate3d(0, 0, 0);
   }
@@ -42,7 +45,7 @@
 }
 
 .about-kicker.reveal { --reveal-delay: 0ms; }
-.about-profile.reveal { --reveal-delay: 80ms; }
+.about-profile-card.reveal { --reveal-delay: 80ms; }
 .about-copy > h2.reveal { --reveal-delay: 140ms; }
 .about-copy > p.reveal:nth-of-type(1) { --reveal-delay: 210ms; }
 .about-copy > p.reveal:nth-of-type(2) { --reveal-delay: 270ms; }
@@ -54,6 +57,7 @@
 .work-section .project-card.reveal:nth-child(2) { --reveal-delay: 190ms; }
 .work-section .project-card.reveal:nth-child(3) { --reveal-delay: 270ms; }
 .work-section .project-card.reveal:nth-child(4) { --reveal-delay: 350ms; }
+.work-section .project-card.reveal:nth-child(5) { --reveal-delay: 430ms; }
 
 .contact-section > .reveal:nth-child(2) { --reveal-delay: 0ms; }
 .contact-section > .reveal:nth-child(3) { --reveal-delay: 80ms; }

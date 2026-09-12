@@ -13,4 +13,9 @@
   display: block;
   user-select: none;
   pointer-events: none;
+  visibility: hidden;
+}
+
+.click-spark-canvas.is-active {
+  visibility: visible;
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, useAnimation, useMotionValue } from "motion/react";
+import { isHeroLive, subscribeHeroLive } from "@/lib/hero-focus";
 
 import "./CircularText.css";
 
@@ -38,7 +39,15 @@ const CircularText = ({
   };
 
   useEffect(() => {
-    spin(spinDuration);
+    let live = isHeroLive();
+    if (live) spin(spinDuration);
+    return subscribeHeroLive(() => {
+      const next = isHeroLive();
+      if (next === live) return;
+      live = next;
+      if (next) spin(spinDuration);
+      else controls.stop();
+    });
   }, [spinDuration, controls, rotation]);
 
   const hoverDuration = () => {

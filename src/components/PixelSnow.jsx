@@ -13,7 +13,14 @@ import {
   WebGLRenderer
 } from 'three';
 
+import { registerHeroGpu } from '@/lib/hero-focus';
 import './PixelSnow.css';
+
+function snowPixelSize(width, resolution) {
+  const compact = width < 720;
+  const minBlock = compact ? 4 : 2;
+  return Math.max(minBlock, Math.round(width / Math.max(1, resolution)));
+}
 
 const vertexShader = `
 void main() {
@@ -224,7 +231,7 @@ export default function PixelSnow({
 
       const w = container.offsetWidth;
       const h = container.offsetHeight;
-      const pixelSize = Math.max(1, Math.round(w / Math.max(1, material.uniforms.uPixelResolution.value)));
+      const pixelSize = snowPixelSize(w, material.uniforms.uPixelResolution.value);
       const renderWidth = Math.max(1, Math.round(w / pixelSize));
       const renderHeight = Math.max(1, Math.round(h / pixelSize));
       renderer.setSize(renderWidth, renderHeight, false);
@@ -251,7 +258,7 @@ export default function PixelSnow({
 
     // The shader already quantizes to this grid. Rendering it at full Retina
     // resolution repeats the same expensive ray traversal for each pixel block.
-    const pixelSize = Math.max(1, Math.round(container.offsetWidth / Math.max(1, pixelResolution)));
+    const pixelSize = snowPixelSize(container.offsetWidth, pixelResolution);
     const renderWidth = Math.max(1, Math.round(container.offsetWidth / pixelSize));
     const renderHeight = Math.max(1, Math.round(container.offsetHeight / pixelSize));
     renderer.setPixelRatio(1);
@@ -296,32 +303,34 @@ export default function PixelSnow({
     let previousTime = null;
     isVisibleRef.current = false;
 
-    const animate = now => {
+    const draw = now => {
       if (previousTime !== null) elapsed += Math.min((now - previousTime) / 1000, 0.05);
       previousTime = now;
       material.uniforms.uTime.value = elapsed;
       renderer.render(scene, camera);
-      animationRef.current = requestAnimationFrame(animate);
     };
+    let unregisterGpu = () => {};
     const syncAnimation = () => {
-      cancelAnimationFrame(animationRef.current);
+      unregisterGpu();
+      unregisterGpu = () => {};
       previousTime = null;
       if (!isVisibleRef.current || document.hidden) return;
       if (preference.matches) {
         renderer.render(scene, camera);
         return;
       }
-      animationRef.current = requestAnimationFrame(animate);
+      unregisterGpu = registerHeroGpu('snow', draw);
     };
     const visibilityObserver = new IntersectionObserver(([entry]) => {
-      isVisibleRef.current = entry.isIntersecting;
+      isVisibleRef.current = entry.isIntersecting && entry.intersectionRatio >= 0.32;
       syncAnimation();
-    });
+    }, { threshold: [0, 0.32, 0.6] });
     visibilityObserver.observe(container);
     document.addEventListener('visibilitychange', syncAnimation);
     preference.addEventListener('change', syncAnimation);
 
     return () => {
+      unregisterGpu();
       cancelAnimationFrame(animationRef.current);
       resizeObserver.disconnect();
       visibilityObserver.disconnect();

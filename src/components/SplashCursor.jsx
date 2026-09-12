@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef } from 'react';
+import { isHeroScrolling } from '@/lib/hero-focus';
 import './SplashCursor.css';
 
 function SplashCursor({
@@ -34,11 +35,12 @@ function SplashCursor({
     const canvas = canvasRef.current;
     const host = canvas?.closest(targetSelector);
     if (!canvas || !host) return;
+    const holdForNav = targetSelector === ".hero-shell";
     let isVisible = false;
     const observer = new IntersectionObserver(([entry]) => {
-      isVisible = entry.isIntersecting;
+      isVisible = entry.isIntersecting && entry.intersectionRatio >= 0.36;
       syncAnimation();
-    });
+    }, { threshold: [0, 0.36, 0.7] });
     observer.observe(host);
 
     // Track if the effect is still active for cleanup
@@ -77,7 +79,7 @@ function SplashCursor({
       COLOR
     };
 
-    let pointers = [new pointerPrototype()];
+    let pointers = [new pointerPrototype(), new pointerPrototype()];
 
     const { gl, ext } = getWebGLContext(canvas);
     if (!gl) { observer.disconnect(); return; }
@@ -696,14 +698,34 @@ function SplashCursor({
     let lastUpdateTime = Date.now();
     let colorUpdateTimer = 0.0;
 
-    function updateFrame() {
+    let busyFrames = 0;
+    let lastDraw = 0;
+    function updateFrame(now) {
       if (!isActive) return;
-      if (!isVisible || document.hidden) return;
+      if (!isVisible || document.hidden || (holdForNav && isHeroScrolling())) {
+        canvas.style.visibility = "hidden";
+        animationFrameId.current = null;
+        return;
+      }
       const dt = calcDeltaTime();
       if (resizeCanvas()) initFramebuffers();
-      updateColors(dt);
       applyFollowTarget(dt);
+      const hasInput = pointers.some((pointer) => pointer.moved);
       applyInputs();
+      if (hasInput) busyFrames = 72;
+      if (busyFrames <= 0) {
+        animationFrameId.current = null;
+        canvas.style.visibility = "hidden";
+        return;
+      }
+      canvas.style.visibility = "";
+      if (busyFrames > 0) busyFrames -= 1;
+      if (now - lastDraw < 32) {
+        animationFrameId.current = requestAnimationFrame(updateFrame);
+        return;
+      }
+      lastDraw = now;
+      updateColors(dt);
       step(dt);
       render(null);
       animationFrameId.current = requestAnimationFrame(updateFrame);
@@ -1002,7 +1024,7 @@ function SplashCursor({
     }
 
     function scaleByPixelRatio(input) {
-      const pixelRatio = window.devicePixelRatio || 1;
+      const pixelRatio = Math.min(window.devicePixelRatio || 1, 1);
       return Math.floor(input * pixelRatio);
     }
 
@@ -1027,12 +1049,18 @@ function SplashCursor({
         y: scaleByPixelRatio(event.clientY - rect.top)
       };
     }
+    function wakeSim() {
+      if (holdForNav && isHeroScrolling()) return;
+      busyFrames = Math.max(busyFrames, 72);
+      if (!animationFrameId.current) updateFrame(performance.now());
+    }
     function handlePointerDown(event) {
       const position = localPosition(event);
       if (!position) return;
       updatePointerDownData(pointers[0], event.pointerId, position.x, position.y);
       pointerInside = true;
       clickSplat(pointers[0]);
+      wakeSim();
     }
     function handlePointerMove(event) {
       const position = localPosition(event);
@@ -1040,9 +1068,11 @@ function SplashCursor({
       if (!pointerInside) {
         updatePointerDownData(pointers[0], event.pointerId, position.x, position.y);
         pointerInside = true;
+        wakeSim();
         return;
       }
       updatePointerMoveData(pointers[0], position.x, position.y, pointers[0].color);
+      wakeSim();
     }
     function handlePointerLeave() {
       pointerInside = false;
@@ -1051,16 +1081,23 @@ function SplashCursor({
     }
     let lastFollowId = null;
     function applyFollowTarget(dt) {
+      const follow = pointers[1];
       const point = followRef?.current;
       if (!point || point.x == null || point.y == null) {
-        if (!followPointer) pointers[0].moved = false;
+        follow.moved = false;
         return;
       }
       const posX = scaleByPixelRatio(point.x);
       const posY = scaleByPixelRatio(point.y);
       if (point.id !== lastFollowId) {
         lastFollowId = point.id;
-        updatePointerDownData(pointers[0], -2, posX, posY);
+        updatePointerDownData(follow, -2, posX, posY);
+        return;
+      }
+      const dx = posX - follow.texcoordX * canvas.width;
+      const dy = posY - (1.0 - follow.texcoordY) * canvas.height;
+      if (dx * dx + dy * dy < 144) {
+        follow.moved = false;
         return;
       }
       const color = generateColor();
@@ -1068,7 +1105,7 @@ function SplashCursor({
       color.r *= strength;
       color.g *= strength;
       color.b *= strength;
-      updatePointerMoveData(pointers[0], posX, posY, color);
+      updatePointerMoveData(follow, posX, posY, color);
     }
 
     if (followPointer) {

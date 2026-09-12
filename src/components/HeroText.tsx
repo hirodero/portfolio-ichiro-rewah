@@ -19,6 +19,7 @@ interface HeroTextProps {
   gatherFrom?: "scatter" | "center";
   glyphAlign?: "center" | "top";
   fadeRatio?: number;
+  particles?: boolean;
 }
 
 export default function HeroText({
@@ -37,11 +38,17 @@ export default function HeroText({
   gatherFrom = "scatter",
   glyphAlign = "center",
   fadeRatio = 0.7,
+  particles = true,
 }: HeroTextProps) {
   const [phase, setPhase] = useState<"gathering" | "fading" | "settled">("gathering");
 
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    const isLite =
+      !particles
+      || window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      || window.self !== window.top
+      || new URLSearchParams(window.location.search).has("preview");
+    if (isLite) {
       setPhase("settled");
       return;
     }

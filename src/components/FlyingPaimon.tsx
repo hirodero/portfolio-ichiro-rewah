@@ -1,10 +1,8 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type MutableRefObject } from "react";
+import { isHeroLive, isHeroScrolling, subscribeHeroLive } from "@/lib/hero-focus";
 import "./FlyingPaimon.css";
-
-const SplashCursor = dynamic(() => import("./SplashCursor"), { ssr: false });
 
 const RIGHT_SRC = "/images/hero/paimon-right.jpg";
 const LEFT_SRC = "/images/hero/paimon-left.jpg";
@@ -33,15 +31,17 @@ function punchBlack(src: string) {
     const image = new Image();
     image.onload = () => {
       const canvas = document.createElement("canvas");
-      canvas.width = image.naturalWidth;
-      canvas.height = image.naturalHeight;
+      const maxEdge = 640;
+      const scale = Math.min(1, maxEdge / Math.max(image.naturalWidth, image.naturalHeight));
+      canvas.width = Math.round(image.naturalWidth * scale);
+      canvas.height = Math.round(image.naturalHeight * scale);
       const context = canvas.getContext("2d");
       if (!context) {
         resolve(src);
         return;
       }
 
-      context.drawImage(image, 0, 0);
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
       const frame = context.getImageData(0, 0, canvas.width, canvas.height);
       const pixels = frame.data;
 
@@ -62,11 +62,18 @@ function punchBlack(src: string) {
   });
 }
 
-export default function FlyingPaimon({ summonNonce = 0 }: { summonNonce?: number }) {
+export default function FlyingPaimon({
+  summonNonce = 0,
+  trailRef: trailRefProp
+}: {
+  summonNonce?: number;
+  trailRef?: MutableRefObject<{ x: number; y: number; id: number } | null>;
+}) {
   const flyerRef = useRef<HTMLDivElement>(null);
   const portalRef = useRef<HTMLDivElement>(null);
+  const localTrailRef = useRef<{ x: number; y: number; id: number } | null>(null);
+  const trailRef = trailRefProp ?? localTrailRef;
   const [assetsReady, setAssetsReady] = useState(false);
-  const trailRef = useRef<{ x: number; y: number; id: number } | null>(null);
   const [motionEnabled, setMotionEnabled] = useState(false);
   const [facing, setFacing] = useState<"right" | "left">("right");
   const [rightSrc, setRightSrc] = useState(RIGHT_SRC);
@@ -87,7 +94,7 @@ export default function FlyingPaimon({ summonNonce = 0 }: { summonNonce?: number
 
   useEffect(() => {
     const flyer = flyerRef.current;
-    const hero = flyer?.parentElement;
+    const hero = flyer?.closest(".hero-shell");
     if (!flyer || !hero || !assetsReady) return;
     const portal = portalRef.current;
     const portalNode = () => hero.querySelector<HTMLElement>(".hero-circular-text");
@@ -122,29 +129,22 @@ export default function FlyingPaimon({ summonNonce = 0 }: { summonNonce?: number
     let trailId = 0;
     let visible = false;
     let tail: { x: number; y: number } | null = null;
-    let heroTop = hero.getBoundingClientRect().top + window.scrollY;
-    let scrollLift = 0;
-    let targetScrollLift = 0;
-    const updateScrollLift = () => {
-      const scrolled = Math.max(0, window.scrollY - heroTop);
-      targetScrollLift = -Math.min(scrolled * 0.24, targetHeight * 0.18, 140);
-    };
-    updateScrollLift();
-    // The scroll handler only records a target; the flight loop eases it in.
-    window.addEventListener("scroll", updateScrollLift, { passive: true });
-
     const resize = new ResizeObserver(() => {
       targetWidth = hero.clientWidth;
       targetHeight = hero.clientHeight;
       origin = portalCenter();
-      heroTop = hero.getBoundingClientRect().top + window.scrollY;
-      updateScrollLift();
     });
     resize.observe(hero);
 
     setFacing("right");
 
+    let lastDraw = 0;
     const tick = (now: number) => {
+      if (isHeroScrolling() && lastDraw && now - lastDraw < 32) {
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+      lastDraw = now;
       const delta = last ? Math.min(0.05, (now - last) / 1000) : 0;
       last = now;
       time += delta;
@@ -163,8 +163,7 @@ export default function FlyingPaimon({ summonNonce = 0 }: { summonNonce?: number
       // Smootherstep has zero velocity/acceleration at both ends of the reveal.
       const progress = usePortal ? Math.max(0, Math.min(1, (time - emergeDelay) / emergeDuration)) : 1;
       const emerge = progress * progress * progress * (progress * (progress * 6 - 15) + 10);
-      scrollLift += (targetScrollLift - scrollLift) * (1 - Math.exp(-delta / 0.24));
-      const flightY = padTop + usable * lane + hover + scrollLift;
+      const flightY = padTop + usable * lane + hover;
       const y = (origin.y - spriteHeight / 2) * (1 - emerge) + flightY * emerge;
       const scale = 0.08 + 0.92 * emerge;
       const tilt = Math.sin(time * 0.6) * 1.8 + Math.sin(time * 0.31 + 2.05) * 0.8;
@@ -207,22 +206,27 @@ export default function FlyingPaimon({ summonNonce = 0 }: { summonNonce?: number
       frame = requestAnimationFrame(tick);
     };
 
+    let wasLive = false;
     function syncAnimation() {
+      const live = visible && isHeroLive() && !motion.matches;
       setMotionEnabled(!motion.matches);
-      flyer?.style.setProperty("--paimon-animation-state", visible && !document.hidden && !motion.matches ? "running" : "paused");
+      flyer?.style.setProperty("--paimon-animation-state", live ? "running" : "paused");
+      if (live === wasLive) return;
+      wasLive = live;
       cancelAnimationFrame(frame);
       last = 0;
-      if (visible && !document.hidden && !motion.matches) {
+      if (live) {
         frame = requestAnimationFrame(tick);
       } else {
         trailRef.current = null;
       }
     }
     const observer = new IntersectionObserver(([entry]) => {
-      visible = entry.isIntersecting;
+      visible = entry.isIntersecting && entry.intersectionRatio >= 0.32;
       syncAnimation();
-    });
+    }, { threshold: [0, 0.32, 0.6] });
     observer.observe(hero);
+    const unsubLive = subscribeHeroLive(syncAnimation);
     document.addEventListener("visibilitychange", syncAnimation);
     motion.addEventListener("change", syncAnimation);
     const heroBox = hero.getBoundingClientRect();
@@ -237,33 +241,16 @@ export default function FlyingPaimon({ summonNonce = 0 }: { summonNonce?: number
       trailRef.current = null;
       resize.disconnect();
       observer.disconnect();
-      window.removeEventListener("scroll", updateScrollLift);
+      unsubLive();
       document.removeEventListener("visibilitychange", syncAnimation);
       motion.removeEventListener("change", syncAnimation);
     };
   }, [assetsReady, summonNonce]);
 
   return (
-    <>
-      <div className="paimon-portal" ref={portalRef} aria-hidden="true" />
-      {motionEnabled && <SplashCursor
-        className="paimon-trail-splash"
-        targetSelector=".hero-shell"
-        followRef={trailRef}
-        followPointer={false}
-        RAINBOW_MODE={false}
-        COLOR="#ffffff"
-        DYE_RESOLUTION={512}
-        SIM_RESOLUTION={96}
-        DENSITY_DISSIPATION={1.8}
-        VELOCITY_DISSIPATION={1.6}
-        SPLAT_RADIUS={0.035}
-        SPLAT_FORCE={1800}
-        FOLLOW_STRENGTH={0.18}
-        FOLLOW_FLOW={-0.65}
-        SHADING={false}
-      />}
-      <div className="flying-paimon" ref={flyerRef} aria-hidden="true">
+    <div className="paimon-wind" aria-hidden="true">
+      <div className="paimon-portal" ref={portalRef} />
+      <div className="flying-paimon" ref={flyerRef}>
         <img src={rightSrc} alt="" className={facing === "right" ? "is-on" : undefined} />
         <img src={leftSrc} alt="" className={facing === "left" ? "is-on" : undefined} />
         <span className="paimon-scarf-sparkles">
@@ -280,7 +267,7 @@ export default function FlyingPaimon({ summonNonce = 0 }: { summonNonce?: number
               <i className="paimon-star-flare" />
               <i className="paimon-star-rays" />
               <i className="paimon-star-rays paimon-star-rays-diagonal" />
-              {Array.from({ length: 18 }, (_, spark) => {
+              {Array.from({ length: 8 }, (_, spark) => {
                 const angle = spark * Math.PI * 2 / 18 + index * 0.4;
                 const distance = 18 + spark % 6 * 7;
                 return <i className="paimon-star-spark" key={spark} style={{
@@ -294,6 +281,6 @@ export default function FlyingPaimon({ summonNonce = 0 }: { summonNonce?: number
           ))}
         </span>
       </div>
-    </>
+    </div>
   );
 }
