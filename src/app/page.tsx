@@ -4,14 +4,15 @@ import AboutWaves from "@/components/AboutWaves";
 import AuroraBackdrop from "@/components/AuroraBackdrop";
 import AuraSplash from "@/components/AuraSplash";
 import HeroText from "@/components/HeroText";
-import CircularText from "@/components/CircularText";
 import HeroGallery from "@/components/HeroGallery";
 import SectionReveal from "@/components/SectionReveal";
 import SiteHeader from "@/components/SiteHeader";
 import { LiveSiteFrame } from "@/components/LiveSiteFrame";
-import FlyingPaimon from "@/components/FlyingPaimon";
+import HeroBeacons from "@/components/HeroBeacons";
+import TracingBeam from "@/components/TracingBeam";
 import AboutToolkit from "@/components/AboutToolkit";
 import JourneySection from "@/components/JourneySection";
+import ContactPlasma from "@/components/ContactPlasma";
 import { socials } from "@/data/socials";
 
 function Arrow() {
@@ -48,13 +49,7 @@ export default function Home() {
       <SiteHeader />
       <SectionReveal className="hero-shell" startInView aria-labelledby="hero-title">
         <SnowBackground />
-        <FlyingPaimon />
-        <CircularText
-          className="hero-circular-text"
-          text="PORTFOLIO • PORTFOLIO • "
-          spinDuration={22}
-          onHover="speedUp"
-        />
+        <HeroBeacons />
         <div className="site-header-slot" aria-hidden="true" />
         <div className="hero-content" id="content">
           <div className="intro-pill reveal">
@@ -112,12 +107,14 @@ export default function Home() {
         <AboutToolkit />
       </SectionReveal>
 
+      <TracingBeam>
       <SectionReveal className="section work-section" id="work" aria-labelledby="work-title">
         <div className="section-heading reveal"><div><p className="eyebrow">02 / SELECTED WORK</p><h2 id="work-title">From idea to interface<span>.</span></h2></div><p>A space for the things I’m building.<br />More projects are on the way.</p></div>
         <div className="project-grid">
           <a className="project-card reveal" href="#top" aria-label="Explore this portfolio project">
             <div className="project-art portfolio-art">
               <LiveSiteFrame
+                src="https://portfolio-ichiro-rewah.vercel.app/?preview=1"
                 fallbackSrc="/images/work/portfolio-hero.jpg"
                 title="Portfolio live preview"
               />
@@ -168,8 +165,10 @@ export default function Home() {
       <SectionReveal className="journey-shell" id="journey" aria-labelledby="journey-title">
         <JourneySection />
       </SectionReveal>
+      </TracingBeam>
 
       <SectionReveal className="section contact-section" id="contact" aria-labelledby="contact-title" startInView>
+        <ContactPlasma />
         <p className="eyebrow reveal">04 / SAY HELLO</p>
         <h2 id="contact-title" className="reveal">Good things start<br />with a conversation<span>.</span></h2>
         <p className="reveal">If something here resonates, I’d like to hear from you.</p>
@@ -183,11 +182,11 @@ export default function Home() {
             );
           })}
         </div>
-      </SectionReveal>
-      <SectionReveal as="footer" className="footer" startInView>
-        <a className="brand" href="#top">Ichiro Rewah.</a>
-        <span>© {new Date().getFullYear()} · Made with curiosity.</span>
-        <a href="#top">Back to top ↑</a>
+        <footer className="footer">
+          <a className="brand" href="#top">Ichiro Rewah.</a>
+          <span>© {new Date().getFullYear()} · Made with curiosity.</span>
+          <a href="#top">Back to top ↑</a>
+        </footer>
       </SectionReveal>
     </main>
   );

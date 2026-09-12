@@ -55,10 +55,10 @@
 .work-section .project-card.reveal:nth-child(3) { --reveal-delay: 270ms; }
 .work-section .project-card.reveal:nth-child(4) { --reveal-delay: 350ms; }
 
-.contact-section > .reveal:nth-child(1) { --reveal-delay: 0ms; }
-.contact-section > .reveal:nth-child(2) { --reveal-delay: 80ms; }
-.contact-section > .reveal:nth-child(3) { --reveal-delay: 150ms; }
-.contact-section > .reveal:nth-child(4) { --reveal-delay: 220ms; }
+.contact-section > .reveal:nth-child(2) { --reveal-delay: 0ms; }
+.contact-section > .reveal:nth-child(3) { --reveal-delay: 80ms; }
+.contact-section > .reveal:nth-child(4) { --reveal-delay: 150ms; }
+.contact-section > .reveal:nth-child(5) { --reveal-delay: 220ms; }
 
 .section-reveal.footer.is-ready:not(.is-inview) {
   opacity: 0;

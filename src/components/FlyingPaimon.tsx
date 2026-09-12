@@ -62,7 +62,7 @@ function punchBlack(src: string) {
   });
 }
 
-export default function FlyingPaimon() {
+export default function FlyingPaimon({ summonNonce = 0 }: { summonNonce?: number }) {
   const flyerRef = useRef<HTMLDivElement>(null);
   const portalRef = useRef<HTMLDivElement>(null);
   const [assetsReady, setAssetsReady] = useState(false);
@@ -89,15 +89,23 @@ export default function FlyingPaimon() {
     const flyer = flyerRef.current;
     const hero = flyer?.parentElement;
     if (!flyer || !hero || !assetsReady) return;
-    const circle = hero.querySelector<HTMLElement>(".hero-circular-text");
     const portal = portalRef.current;
-    const hasPortal = Boolean(circle?.offsetWidth);
-    const portalCenter = () => ({
-      x: circle ? circle.offsetLeft + circle.offsetWidth / 2 : hero.clientWidth * .2,
-      y: circle ? circle.offsetTop + circle.offsetHeight / 2 : hero.clientHeight * .25,
-      size: circle?.offsetWidth || 120,
-    });
+    const portalNode = () => hero.querySelector<HTMLElement>(".hero-circular-text");
+    const portalCenter = () => {
+      const circle = portalNode();
+      return {
+        x: circle ? circle.offsetLeft + circle.offsetWidth / 2 : hero.clientWidth * .2,
+        y: circle ? circle.offsetTop + circle.offsetHeight / 2 : hero.clientHeight * .25,
+        size: circle?.offsetWidth || 120,
+      };
+    };
+    let usePortal = Boolean(portalNode()?.offsetWidth);
     let origin = portalCenter();
+    const fastSummon = summonNonce > 0;
+    let emergeDelay = fastSummon ? 0.12 : 0.85;
+    let emergeDuration = fastSummon ? 1.05 : 2.6;
+    let portalWindow = fastSummon ? 2.1 : 4.5;
+    let portalOpen = fastSummon ? 0.4 : 1.2;
 
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
     setMotionEnabled(!motion.matches);
@@ -107,7 +115,7 @@ export default function FlyingPaimon() {
     let targetWidth = width;
     let targetHeight = height;
     let size = Math.min(280, Math.max(148, width * 0.2));
-    let x = hasPortal ? origin.x - size / 2 : -size - 36;
+    let x = usePortal ? origin.x - size / 2 : -size - 36;
     let direction = 1;
     let time = 0;
     let last = 0;
@@ -134,6 +142,8 @@ export default function FlyingPaimon() {
     });
     resize.observe(hero);
 
+    setFacing("right");
+
     const tick = (now: number) => {
       const delta = last ? Math.min(0.05, (now - last) / 1000) : 0;
       last = now;
@@ -151,7 +161,7 @@ export default function FlyingPaimon() {
       const hover = Math.sin(time * 0.6) * 8 + Math.sin(time * 0.31 + 2.05) * 4;
       // One clock drives the opening portal, emergence, and acceleration.
       // Smootherstep has zero velocity/acceleration at both ends of the reveal.
-      const progress = hasPortal ? Math.max(0, Math.min(1, (time - 0.85) / 2.6)) : 1;
+      const progress = usePortal ? Math.max(0, Math.min(1, (time - emergeDelay) / emergeDuration)) : 1;
       const emerge = progress * progress * progress * (progress * (progress * 6 - 15) + 10);
       scrollLift += (targetScrollLift - scrollLift) * (1 - Math.exp(-delta / 0.24));
       const flightY = padTop + usable * lane + hover + scrollLift;
@@ -159,13 +169,15 @@ export default function FlyingPaimon() {
       const scale = 0.08 + 0.92 * emerge;
       const tilt = Math.sin(time * 0.6) * 1.8 + Math.sin(time * 0.31 + 2.05) * 0.8;
       x += direction * width * 0.032 * delta * emerge;
-      if (portal && hasPortal && time < 4.5) {
-        const pulse = Math.sin(Math.PI * Math.min(1, time / 4.2));
+      if (portal && usePortal && time < portalWindow) {
+        const pulse = Math.sin(Math.PI * Math.min(1, time / (portalWindow * 0.93)));
         portal.style.left = `${origin.x}px`;
         portal.style.top = `${origin.y}px`;
         portal.style.width = `${origin.size * 1.25}px`;
         portal.style.opacity = `${pulse * 0.7}`;
-        portal.style.transform = `translate(-50%, -50%) scale(${0.55 + 0.45 * Math.min(1, time / 1.2)}) rotate(${time * 35}deg)`;
+        portal.style.transform = `translate(-50%, -50%) scale(${0.55 + 0.45 * Math.min(1, time / portalOpen)}) rotate(${time * 55}deg)`;
+      } else if (portal) {
+        portal.style.opacity = "0";
       }
 
       // Turn only when the entire sprite is outside the hero on either side.
@@ -213,8 +225,12 @@ export default function FlyingPaimon() {
     observer.observe(hero);
     document.addEventListener("visibilitychange", syncAnimation);
     motion.addEventListener("change", syncAnimation);
+    const heroBox = hero.getBoundingClientRect();
+    visible = heroBox.bottom > 0 && heroBox.top < window.innerHeight;
     flyer.style.width = `${size}px`;
-    flyer.style.transform = `translate3d(${x}px, ${height * 0.32}px, 0)`;
+    flyer.style.opacity = "0";
+    flyer.style.transform = `translate3d(${x}px, ${origin.y - size / 3}px, 0) scale(0.08)`;
+    syncAnimation();
 
     return () => {
       cancelAnimationFrame(frame);
@@ -225,7 +241,7 @@ export default function FlyingPaimon() {
       document.removeEventListener("visibilitychange", syncAnimation);
       motion.removeEventListener("change", syncAnimation);
     };
-  }, [assetsReady]);
+  }, [assetsReady, summonNonce]);
 
   return (
     <>

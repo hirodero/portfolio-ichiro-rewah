@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { motion, useAnimation, useMotionValue } from "motion/react";
-import HeroText from "./HeroText";
 
 import "./CircularText.css";
 
@@ -15,114 +14,92 @@ const getRotationTransition = (duration, from, loop = true) => ({
   repeat: loop ? Infinity : 0
 });
 
-const getTransition = (duration, from) => ({
-  rotate: getRotationTransition(duration, from),
-  scale: {
-    type: "spring",
-    damping: 20,
-    stiffness: 300
-  }
-});
-
-const CircularText = ({ text, spinDuration = 20, onHover = "speedUp", className = "" }) => {
-  const letters = Array.from(text);
+const CircularText = ({
+  text,
+  hoverText,
+  spinDuration = 20,
+  onHover = "speedUp",
+  onActivate,
+  className = ""
+}) => {
+  const [displayText, setDisplayText] = useState(text);
+  const letters = Array.from(displayText);
   const controls = useAnimation();
   const rotation = useMotionValue(0);
 
-  useEffect(() => {
+  const spin = (duration) => {
     const start = rotation.get();
     controls.start({
       rotate: start + 360,
-      scale: 1,
       transition: {
-        rotate: getRotationTransition(spinDuration, start),
-        scale: { type: "tween", duration: 1.55, ease: [0.16, 1, 0.3, 1] }
+        rotate: getRotationTransition(duration, start)
       }
     });
-  }, [spinDuration, text, onHover, controls, rotation]);
+  };
+
+  useEffect(() => {
+    spin(spinDuration);
+  }, [spinDuration, controls, rotation]);
+
+  const hoverDuration = () => {
+    if (onHover === "slowDown") return spinDuration * 2;
+    if (onHover === "speedUp") return spinDuration / 4;
+    if (onHover === "goBonkers") return spinDuration / 20;
+    return spinDuration;
+  };
 
   const handleHoverStart = () => {
-    const start = rotation.get();
-    if (!onHover) return;
-
-    let transitionConfig;
-    let scaleVal = 1;
-
-    switch (onHover) {
-      case "slowDown":
-        transitionConfig = getTransition(spinDuration * 2, start);
-        break;
-      case "speedUp":
-        transitionConfig = getTransition(spinDuration / 4, start);
-        break;
-      case "pause":
-        transitionConfig = {
-          rotate: { type: "spring", damping: 20, stiffness: 300 },
-          scale: { type: "spring", damping: 20, stiffness: 300 }
-        };
-        scaleVal = 1;
-        break;
-      case "goBonkers":
-        transitionConfig = getTransition(spinDuration / 20, start);
-        scaleVal = 0.8;
-        break;
-      default:
-        transitionConfig = getTransition(spinDuration, start);
+    if (hoverText) setDisplayText(hoverText);
+    if (!onHover || onHover === "pause") {
+      controls.stop();
+      return;
     }
-
-    controls.start({
-      rotate: start + 360,
-      scale: scaleVal,
-      transition: transitionConfig
-    });
+    spin(hoverDuration());
   };
 
   const handleHoverEnd = () => {
-    const start = rotation.get();
-    controls.start({
-      rotate: start + 360,
-      scale: 1,
-      transition: getTransition(spinDuration, start)
-    });
+    setDisplayText(text);
+    spin(spinDuration);
+  };
+
+  const handleActivate = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    onActivate?.();
   };
 
   return (
-    <motion.div
-      className={`circular-text ${className}`}
-      style={{ rotate: rotation }}
-      initial={{ rotate: 0, scale: 0.18 }}
-      animate={controls}
-      onMouseEnter={handleHoverStart}
-      onMouseLeave={handleHoverEnd}
-    >
-      {letters.map((letter, i) => {
-        const rotationDeg = (360 / letters.length) * i;
-        const factor = Math.PI / letters.length;
-        const x = factor * i;
-        const y = factor * i;
-        const transform = `rotateZ(${rotationDeg}deg) translate3d(${x}px, ${y}px, 0)`;
+    <div className={`circular-text-wrap ${className}`.trim()}>
+      <button
+        type="button"
+        className="circular-text-hit"
+        aria-label="Call Paimon"
+        onMouseEnter={handleHoverStart}
+        onMouseLeave={handleHoverEnd}
+        onClick={handleActivate}
+      />
+      <motion.div
+        className="circular-text"
+        style={{ rotate: rotation }}
+        initial={{ rotate: 0 }}
+        animate={controls}
+        aria-hidden="true"
+      >
+        {letters.map((letter, i) => {
+          const rotationDeg = (360 / letters.length) * i;
+          const factor = Math.PI / letters.length;
+          const x = factor * i;
+          const y = factor * i;
+          const transform = `rotateZ(${rotationDeg}deg) translate3d(${x}px, ${y}px, 0)`;
 
-        return (
-          <span key={i} className="circular-letter" style={{ transform, WebkitTransform: transform }}>
-            {letter.trim() ? (
-              <HeroText
-                text={letter}
-                fontWeight={600}
-                particleSize={1.3}
-                density={2}
-                scatter={8}
-                gatherDuration={1800}
-                stagger={160}
-                maxParticles={80}
-                gatherFrom="center"
-                glyphAlign="top"
-                fadeRatio={0.92}
-              />
-            ) : letter}
-          </span>
-        );
-      })}
-    </motion.div>
+          return (
+            <span key={`${displayText}-${i}`} className="circular-letter" style={{ transform, WebkitTransform: transform }}>
+              {letter}
+            </span>
+          );
+        })}
+      </motion.div>
+    </div>
   );
 };
 
