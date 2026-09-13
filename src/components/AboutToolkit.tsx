@@ -16,9 +16,11 @@ export default function AboutToolkit() {
   });
 
   return (
-    <aside className="about-toolkit reveal" aria-label="Tools I keep close">
+    <aside className="about-toolkit" aria-label="Tools I keep close">
       <p className="about-toolkit-label">Tools I keep close</p>
-      <GlassIcons items={items} className="about-toolkit-icons" />
+      <div className="toolkit-motion">
+        <GlassIcons items={items} className="about-toolkit-icons" />
+      </div>
       <p className="about-toolkit-capabilities">
         {capabilities.slice(0, 3).join(" · ")}
         <br />

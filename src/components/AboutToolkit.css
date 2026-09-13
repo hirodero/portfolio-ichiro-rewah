@@ -37,6 +37,11 @@
   --float-y: 0px;
 }
 
+/* Scroll motion belongs to each item's wrapper, not the row or idle float. */
+.about-toolkit .icon-btn {
+  animation: none;
+}
+
 .about-toolkit-capabilities {
   margin: 12px 0 0;
   max-width: none;

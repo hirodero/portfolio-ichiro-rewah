@@ -9,6 +9,12 @@
   overflow: visible;
 }
 
+.icon-motion-item {
+  flex: 0 0 auto;
+  position: relative;
+  display: flex;
+}
+
 .icon-btn {
   --float-y: 0px;
   background-color: transparent;

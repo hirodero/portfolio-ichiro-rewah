@@ -31,6 +31,20 @@
   pointer-events: none;
   transform-origin: 50% 50%;
   -webkit-transform-origin: 50% 50%;
+  animation: circular-spin var(--spin-duration, 22s) linear infinite;
+  will-change: transform;
+}
+
+.circular-text.is-fast {
+  animation-duration: calc(var(--spin-duration, 22s) / 4);
+}
+
+.circular-text.is-paused {
+  animation-play-state: paused;
+}
+
+@keyframes circular-spin {
+  to { transform: rotate(360deg); }
 }
 
 .circular-text-hit {

@@ -1,19 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion, useAnimation, useMotionValue } from "motion/react";
 import { isHeroLive, subscribeHeroLive } from "@/lib/hero-focus";
 
 import "./CircularText.css";
-
-const getRotationTransition = (duration, from, loop = true) => ({
-  from,
-  to: from + 360,
-  ease: "linear",
-  duration,
-  type: "tween",
-  repeat: loop ? Infinity : 0
-});
 
 const CircularText = ({
   text,
@@ -24,51 +14,29 @@ const CircularText = ({
   className = ""
 }) => {
   const [displayText, setDisplayText] = useState(text);
+  const [paused, setPaused] = useState(false);
+  const [fast, setFast] = useState(false);
   const letters = Array.from(displayText);
-  const controls = useAnimation();
-  const rotation = useMotionValue(0);
-
-  const spin = (duration) => {
-    const start = rotation.get();
-    controls.start({
-      rotate: start + 360,
-      transition: {
-        rotate: getRotationTransition(duration, start)
-      }
-    });
-  };
 
   useEffect(() => {
-    let live = isHeroLive();
-    if (live) spin(spinDuration);
-    return subscribeHeroLive(() => {
-      const next = isHeroLive();
-      if (next === live) return;
-      live = next;
-      if (next) spin(spinDuration);
-      else controls.stop();
-    });
-  }, [spinDuration, controls, rotation]);
-
-  const hoverDuration = () => {
-    if (onHover === "slowDown") return spinDuration * 2;
-    if (onHover === "speedUp") return spinDuration / 4;
-    if (onHover === "goBonkers") return spinDuration / 20;
-    return spinDuration;
-  };
+    const sync = () => setPaused(!isHeroLive());
+    sync();
+    return subscribeHeroLive(sync);
+  }, []);
 
   const handleHoverStart = () => {
     if (hoverText) setDisplayText(hoverText);
     if (!onHover || onHover === "pause") {
-      controls.stop();
+      setPaused(true);
       return;
     }
-    spin(hoverDuration());
+    setFast(true);
   };
 
   const handleHoverEnd = () => {
     setDisplayText(text);
-    spin(spinDuration);
+    setFast(false);
+    setPaused(!isHeroLive());
   };
 
   const handleActivate = (event) => {
@@ -87,11 +55,9 @@ const CircularText = ({
         onMouseLeave={handleHoverEnd}
         onClick={handleActivate}
       />
-      <motion.div
-        className="circular-text"
-        style={{ rotate: rotation }}
-        initial={{ rotate: 0 }}
-        animate={controls}
+      <div
+        className={`circular-text${paused ? " is-paused" : ""}${fast ? " is-fast" : ""}`}
+        style={{ "--spin-duration": `${spinDuration}s` }}
         aria-hidden="true"
       >
         {letters.map((letter, i) => {
@@ -107,7 +73,7 @@ const CircularText = ({
             </span>
           );
         })}
-      </motion.div>
+      </div>
     </div>
   );
 };

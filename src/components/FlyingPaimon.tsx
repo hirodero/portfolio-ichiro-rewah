@@ -29,35 +29,46 @@ function cssValue(value: number, unit: "px" | "s") {
 function punchBlack(src: string) {
   return new Promise<string>((resolve) => {
     const image = new Image();
-    image.onload = () => {
-      const canvas = document.createElement("canvas");
-      const maxEdge = 640;
-      const scale = Math.min(1, maxEdge / Math.max(image.naturalWidth, image.naturalHeight));
-      canvas.width = Math.round(image.naturalWidth * scale);
-      canvas.height = Math.round(image.naturalHeight * scale);
-      const context = canvas.getContext("2d");
-      if (!context) {
-        resolve(src);
-        return;
-      }
-
-      context.drawImage(image, 0, 0, canvas.width, canvas.height);
-      const frame = context.getImageData(0, 0, canvas.width, canvas.height);
-      const pixels = frame.data;
-
-      for (let index = 0; index < pixels.length; index += 4) {
-        const red = pixels[index];
-        const green = pixels[index + 1];
-        const blue = pixels[index + 2];
-        const luma = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
-        if (luma < 10) pixels[index + 3] = 0;
-        else if (luma < 26) pixels[index + 3] = Math.round(((luma - 10) / 16) * 255);
-      }
-
-      context.putImageData(frame, 0, 0);
-      resolve(canvas.toDataURL("image/png"));
+    // Canvas readback can be blocked by browser privacy settings. Always settle
+    // with the original image so a failed cutout cannot hide the entire flyer.
+    const timeout = window.setTimeout(() => resolve(src), 5000);
+    const finish = (result: string) => {
+      window.clearTimeout(timeout);
+      resolve(result);
     };
-    image.onerror = () => resolve(src);
+    image.onload = () => {
+      try {
+        const canvas = document.createElement("canvas");
+        const maxEdge = 640;
+        const scale = Math.min(1, maxEdge / Math.max(image.naturalWidth, image.naturalHeight));
+        canvas.width = Math.round(image.naturalWidth * scale);
+        canvas.height = Math.round(image.naturalHeight * scale);
+        const context = canvas.getContext("2d");
+        if (!context) {
+          finish(src);
+          return;
+        }
+
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        const frame = context.getImageData(0, 0, canvas.width, canvas.height);
+        const pixels = frame.data;
+
+        for (let index = 0; index < pixels.length; index += 4) {
+          const red = pixels[index];
+          const green = pixels[index + 1];
+          const blue = pixels[index + 2];
+          const luma = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+          if (luma < 10) pixels[index + 3] = 0;
+          else if (luma < 26) pixels[index + 3] = Math.round(((luma - 10) / 16) * 255);
+        }
+
+        context.putImageData(frame, 0, 0);
+        finish(canvas.toDataURL("image/png"));
+      } catch {
+        finish(src);
+      }
+    };
+    image.onerror = () => finish(src);
     image.src = src;
   });
 }
@@ -74,7 +85,6 @@ export default function FlyingPaimon({
   const localTrailRef = useRef<{ x: number; y: number; id: number } | null>(null);
   const trailRef = trailRefProp ?? localTrailRef;
   const [assetsReady, setAssetsReady] = useState(false);
-  const [motionEnabled, setMotionEnabled] = useState(false);
   const [facing, setFacing] = useState<"right" | "left">("right");
   const [rightSrc, setRightSrc] = useState(RIGHT_SRC);
   const [leftSrc, setLeftSrc] = useState(LEFT_SRC);
@@ -115,14 +125,13 @@ export default function FlyingPaimon({
     let portalOpen = fastSummon ? 0.4 : 1.2;
 
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setMotionEnabled(!motion.matches);
     let frame = 0;
     let width = hero.clientWidth;
     let height = hero.clientHeight;
     let targetWidth = width;
     let targetHeight = height;
     let size = Math.min(280, Math.max(148, width * 0.2));
-    let x = usePortal ? origin.x - size / 2 : -size - 36;
+    let x = usePortal ? origin.x - size / 2 : width * 0.08;
     let direction = 1;
     let time = 0;
     let last = 0;
@@ -140,7 +149,8 @@ export default function FlyingPaimon({
 
     let lastDraw = 0;
     const tick = (now: number) => {
-      if (isHeroScrolling() && lastDraw && now - lastDraw < 32) {
+      const minFrame = isHeroScrolling() ? 48 : 33;
+      if (lastDraw && now - lastDraw < minFrame) {
         frame = requestAnimationFrame(tick);
         return;
       }
@@ -209,7 +219,6 @@ export default function FlyingPaimon({
     let wasLive = false;
     function syncAnimation() {
       const live = visible && isHeroLive() && !motion.matches;
-      setMotionEnabled(!motion.matches);
       flyer?.style.setProperty("--paimon-animation-state", live ? "running" : "paused");
       if (live === wasLive) return;
       wasLive = live;
@@ -222,9 +231,9 @@ export default function FlyingPaimon({
       }
     }
     const observer = new IntersectionObserver(([entry]) => {
-      visible = entry.isIntersecting && entry.intersectionRatio >= 0.32;
+      visible = entry.isIntersecting;
       syncAnimation();
-    }, { threshold: [0, 0.32, 0.6] });
+    }, { rootMargin: "30% 0px", threshold: [0, 0.01, 0.12] });
     observer.observe(hero);
     const unsubLive = subscribeHeroLive(syncAnimation);
     document.addEventListener("visibilitychange", syncAnimation);
@@ -248,11 +257,11 @@ export default function FlyingPaimon({
   }, [assetsReady, summonNonce]);
 
   return (
-    <div className="paimon-wind" aria-hidden="true">
+    <div className={`paimon-wind${(facing === "right" ? rightSrc === RIGHT_SRC : leftSrc === LEFT_SRC) ? " has-original" : ""}`} aria-hidden="true">
       <div className="paimon-portal" ref={portalRef} />
       <div className="flying-paimon" ref={flyerRef}>
-        <img src={rightSrc} alt="" className={facing === "right" ? "is-on" : undefined} />
-        <img src={leftSrc} alt="" className={facing === "left" ? "is-on" : undefined} />
+        <img src={rightSrc} alt="" className={`${facing === "right" ? "is-on" : ""}${rightSrc === RIGHT_SRC ? " is-original" : ""}`} />
+        <img src={leftSrc} alt="" className={`${facing === "left" ? "is-on" : ""}${leftSrc === LEFT_SRC ? " is-original" : ""}`} />
         <span className="paimon-scarf-sparkles">
           {SCARF_STARS.map((star, index) => (
             <span className="paimon-star" key={index} style={{
@@ -267,7 +276,7 @@ export default function FlyingPaimon({
               <i className="paimon-star-flare" />
               <i className="paimon-star-rays" />
               <i className="paimon-star-rays paimon-star-rays-diagonal" />
-              {Array.from({ length: 8 }, (_, spark) => {
+              {Array.from({ length: 3 }, (_, spark) => {
                 const angle = spark * Math.PI * 2 / 18 + index * 0.4;
                 const distance = 18 + spark % 6 * 7;
                 return <i className="paimon-star-spark" key={spark} style={{

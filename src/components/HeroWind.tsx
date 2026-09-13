@@ -38,6 +38,7 @@ export default function HeroWind() {
     let lastTime = 0;
     let lastInput = 0;
     let raf = 0;
+    let goingDown = true;
     let travel = Math.max(hero.offsetHeight * 0.68, 1);
 
     const readProgress = () => {
@@ -62,34 +63,44 @@ export default function HeroWind() {
       const compact = window.innerWidth <= 700;
       const raw = readProgress();
       const instantVel = dt > 0 ? (raw - lastRaw) / dt : 0;
+      if (raw > lastRaw + 0.002) goingDown = true;
+      else if (raw < lastRaw - 0.002) goingDown = false;
       lastRaw = raw;
       velocity += (instantVel - velocity) * (1 - Math.exp(-dt / 0.07));
-      progress += (raw - progress) * (1 - Math.exp(-dt / 0.08));
 
-      const dipWave = Math.sin(Math.min(progress / 0.18, 1) * Math.PI);
+      const catchup = !goingDown || Math.abs(raw - progress) > 0.22 ? 0.028 : 0.08;
+      progress += (raw - progress) * (1 - Math.exp(-dt / catchup));
+
       const lift = Math.pow(Math.max(0, progress - 0.09), 1.38);
-      const gust = Math.min(Math.max(0, velocity) * (compact ? 38 : 58), compact ? 56 : 100);
-      const snowDip = dipWave * (compact ? 56 : 92) + gust * 0.55;
-      const paimonDip = dipWave * (compact ? 170 : 286) + gust * 1.55;
       const snowRise = lift * (compact ? 180 : 300);
       const paimonRise = lift * (compact ? 230 : 380);
       const sway = Math.sin(progress * Math.PI) * (compact ? 16 : 28);
 
-      const targetSnowY = snowDip - snowRise;
-      const targetSnowX = sway * 0.75;
-      const targetPaimonY = paimonDip - paimonRise;
-      const targetPaimonX = sway;
-      const targetPaimonRot = progress * -9 - Math.min(Math.max(velocity, 0), 1.8) * 2.6;
+      let targetSnowY = -snowRise;
+      let targetSnowX = sway * (goingDown ? 0.75 : 0.4);
+      let targetPaimonY = -paimonRise;
+      let targetPaimonX = sway * (goingDown ? 1 : 0.45);
+      let targetPaimonRot = progress * -9;
 
-      stepSpring(snowY, targetSnowY, dt, 15, 5.8);
-      stepSpring(snowX, targetSnowX, dt, 13, 5.6);
-      stepSpring(paimonY, targetPaimonY, dt, 14, 4.2);
-      stepSpring(paimonX, targetPaimonX, dt, 12, 4.5);
-      stepSpring(paimonRot, targetPaimonRot, dt, 11, 4.4);
+      if (goingDown) {
+        const dipWave = Math.sin(Math.min(progress / 0.18, 1) * Math.PI);
+        const gust = Math.min(Math.max(0, velocity) * (compact ? 38 : 58), compact ? 56 : 100);
+        targetSnowY += dipWave * (compact ? 56 : 92) + gust * 0.55;
+        targetPaimonY += dipWave * (compact ? 170 : 286) + gust * 1.55;
+        targetPaimonRot -= Math.min(Math.max(velocity, 0), 1.8) * 2.6;
+      }
+
+      const stiffness = goingDown ? 15 : 26;
+      const damping = goingDown ? 5.8 : 11.4;
+      stepSpring(snowY, targetSnowY, dt, stiffness, damping);
+      stepSpring(snowX, targetSnowX, dt, goingDown ? 13 : 24, damping);
+      stepSpring(paimonY, targetPaimonY, dt, goingDown ? 14 : 26, goingDown ? 4.2 : 11);
+      stepSpring(paimonX, targetPaimonX, dt, goingDown ? 12 : 22, goingDown ? 4.5 : 10.6);
+      stepSpring(paimonRot, targetPaimonRot, dt, goingDown ? 11 : 22, goingDown ? 4.4 : 10.8);
       apply();
 
       const idle =
-        now - lastInput > 480
+        now - lastInput > 360
         && settled(snowY, targetSnowY)
         && settled(snowX, targetSnowX)
         && settled(paimonY, targetPaimonY)

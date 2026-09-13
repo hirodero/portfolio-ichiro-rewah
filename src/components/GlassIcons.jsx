@@ -20,20 +20,21 @@ export default function GlassIcons({ items, className }) {
   return (
     <div className={`icon-btns ${className || ""}`}>
       {items.map((item, index) => (
-        <button
-          key={item.label || index}
-          className={`icon-btn ${item.customClass || ""}`}
-          aria-label={item.label}
-          type="button"
-        >
-          <span className="icon-btn__back" style={getBackgroundStyle(item.color)} />
-          <span className="icon-btn__front">
-            <span className="icon-btn__icon" aria-hidden="true">
-              {item.icon}
+        <div className="icon-motion-item" key={item.label || index} data-tool={item.label}>
+          <button
+            className={`icon-btn ${item.customClass || ""}`}
+            aria-label={item.label}
+            type="button"
+          >
+            <span className="icon-btn__back" style={getBackgroundStyle(item.color)} />
+            <span className="icon-btn__front">
+              <span className="icon-btn__icon" aria-hidden="true">
+                {item.icon}
+              </span>
             </span>
-          </span>
-          <span className="icon-btn__label">{item.label}</span>
-        </button>
+            <span className="icon-btn__label">{item.label}</span>
+          </button>
+        </div>
       ))}
     </div>
   );

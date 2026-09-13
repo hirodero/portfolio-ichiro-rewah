@@ -6,6 +6,7 @@ import AuraSplash from "@/components/AuraSplash";
 import HeroText from "@/components/HeroText";
 import HeroGallery from "@/components/HeroGallery";
 import SectionReveal from "@/components/SectionReveal";
+import SectionWind from "@/components/SectionWind";
 import SiteHeader from "@/components/SiteHeader";
 import { LiveSiteFrame } from "@/components/LiveSiteFrame";
 import HeroBeacons from "@/components/HeroBeacons";
@@ -57,6 +58,7 @@ export default async function Home({ searchParams }: HomeProps) {
       <SectionReveal className="hero-shell" startInView aria-labelledby="hero-title">
         {isPreview ? null : <SnowBackground />}
         {isPreview ? null : <HeroBeacons />}
+        {isPreview ? null : <SectionWind variant="hero" />}
         <div className="site-header-slot" aria-hidden="true" />
         <div className="hero-content" id="content">
           <div className="intro-pill reveal">
@@ -101,6 +103,7 @@ export default async function Home({ searchParams }: HomeProps) {
 
       <SectionReveal className="section about-section" id="about" aria-labelledby="about-title" latch>
         {isPreview ? null : <AboutWaves />}
+        <SectionWind>
         <p className="eyebrow about-kicker reveal">01 / BEHIND THE SCREEN</p>
         <AboutProfile />
         <div className="about-copy">
@@ -112,10 +115,11 @@ export default async function Home({ searchParams }: HomeProps) {
           <div className="about-details reveal"><span><span className="status-dot" /> Always learning</span><span>One commit at a time ↗</span></div>
         </div>
         <AboutToolkit />
+        </SectionWind>
       </SectionReveal>
 
       <TracingBeam>
-      <SectionReveal className="section work-section" id="work" aria-labelledby="work-title">
+      <SectionReveal className="section work-section" id="work" aria-labelledby="work-title" latch>
         <div className="section-heading reveal"><div><p className="eyebrow">02 / SELECTED WORK</p><h2 id="work-title">From idea to interface<span>.</span></h2></div><p>A space for the things I’m building.<br />More projects are on the way.</p></div>
         <div className="project-grid">
           <a className="project-card reveal" href="#top" aria-label="Explore this portfolio project">
@@ -181,7 +185,7 @@ export default async function Home({ searchParams }: HomeProps) {
         </div>
       </SectionReveal>
 
-      <SectionReveal className="journey-shell" id="journey" aria-labelledby="journey-title">
+      <SectionReveal className="journey-shell" id="journey" aria-labelledby="journey-title" latch>
         <JourneySection />
       </SectionReveal>
       </TracingBeam>

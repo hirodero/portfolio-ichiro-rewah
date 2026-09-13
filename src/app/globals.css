@@ -21,11 +21,19 @@
 }
 
 .snow-background.is-on {
-  animation: hero-atmosphere-in 1s ease-out forwards;
+  opacity: 1;
 }
 
 .rays-background.is-on {
-  animation: hero-rays-in 1.15s ease-out 90ms forwards;
+  opacity: 0.3;
+}
+
+.snow-background.is-on.is-intro {
+  animation: hero-atmosphere-in 1s ease-out both;
+}
+
+.rays-background.is-on.is-intro {
+  animation: hero-rays-in 1.15s ease-out 90ms both;
 }
 
 @keyframes hero-atmosphere-in {
@@ -292,9 +300,9 @@ h1 .hero-title-line:last-child {
   .hero-gallery {
     display: block;
     position: relative;
-    flex: 1 1 auto;
+    flex: 0 0 auto;
     width: 100%;
-    min-height: 200px;
+    height: clamp(250px, 72vw, 300px);
     margin: 0 0 58px;
     -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 16%, #000 84%, transparent 100%);
     mask-image: linear-gradient(to right, transparent 0%, #000 16%, #000 84%, transparent 100%);
@@ -356,8 +364,48 @@ h1 .hero-title-line:last-child {
   contain: paint;
 }
 
-.live-site-frame.is-live img {
+.live-site-preview,
+.live-site-loader {
+  position: absolute;
+  inset: 0;
+}
+
+.live-site-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 14px;
+  background: #111016;
+  color: #aaa3b5;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+  transition: opacity 240ms ease;
+}
+
+.live-site-loader-ring {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #aaa3b526;
+  border-top-color: #bfb3d2;
+  border-radius: 50%;
+}
+
+.live-site-loader.is-loading .live-site-loader-ring {
+  animation: live-preview-spin 1s linear infinite;
+}
+
+.live-site-preview.is-ready .live-site-loader {
   opacity: 0;
+}
+
+.live-site-preview.is-ready .live-site-loader-ring {
+  animation: none;
+}
+
+@keyframes live-preview-spin {
+  to { transform: rotate(360deg); }
 }
 
 .live-site-scaler {
@@ -371,13 +419,17 @@ h1 .hero-title-line:last-child {
   transform-origin: center;
   pointer-events: none;
   opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.7s ease;
+  transition: opacity 240ms ease;
 }
 
-.live-site-scaler.is-ready {
+.live-site-preview.is-ready .live-site-scaler {
   opacity: 1;
-  visibility: visible;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-site-loader,
+  .live-site-scaler { transition: none; }
+  .live-site-loader.is-loading .live-site-loader-ring { animation: none; }
 }
 
 .live-site-scaler iframe {

@@ -148,13 +148,9 @@ export default function PillNav({
         <a className="brand-mark" href={brand.href} aria-hidden="true" tabIndex={-1}>
           <img src={logo} alt="" width={38} height={38} />
         </a>
-        <PillLink
-          item={brand}
-          index={0}
-          circleRefs={circleRefs}
-          handleEnter={handleEnter}
-          handleLeave={handleLeave}
-        />
+        <a className="brand-wordmark" href={brand.href} aria-label={brand.ariaLabel}>
+          {brand.label}
+        </a>
       </div>
       <div className="pill-nav-items">
         <ul className="pill-list" role="menubar">

@@ -33,12 +33,14 @@ void main() {
 `;
 
 const fragmentShader = `
-precision mediump float;
+precision highp float;
+precision highp int;
 
 uniform float uTime;
 uniform vec2 uResolution;
 uniform float uFlakeSize;
 uniform float uMinFlakeSize;
+uniform float uMaxFlakeSize;
 uniform float uPixelResolution;
 uniform float uSpeed;
 uniform float uDepthFade;
@@ -62,7 +64,9 @@ uniform float uDirection;
 
 // Optimized hash - inline multiplication
 #define hash(n) (n * (n ^ (n >> 15)))
-#define coord3(p) (uvec3(p).x * M1 ^ uvec3(p).y * M2 ^ uvec3(p).z * M3)
+// Convert negative cells through signed integers; float-to-uint is undefined
+// for negative values and can produce different snow on different GPUs.
+#define coord3(p) (uvec3(ivec3(p)).x * M1 ^ uvec3(ivec3(p)).y * M2 ^ uvec3(ivec3(p)).z * M3)
 
 // Precomputed camera basis vectors (normalized vec3(1,1,1), vec3(1,0,-1))
 const vec3 camK = vec3(0.57735027, 0.57735027, 0.57735027);
@@ -125,7 +129,7 @@ void main() {
   vec3 timeAnim = timeSpeed * 0.1 * vec3(7.0, 8.0, 5.0);
 
   float t = 0.0;
-  for (int i = 0; i < 128; i++) {
+  for (int i = 0; i < 72; i++) {
     if (t >= uFarPlane) break;
     
     vec3 fpos = floor(pos);
@@ -150,7 +154,11 @@ void main() {
         vec2 testUV = abs(vec2(testX, testY));
         
         float depth = dot(flakePos - camPos, camK);
-        float flakeSize = max(uFlakeSize, uMinFlakeSize * depth * halfInvResX);
+        // Bound the projected diameter, including flakes passing the camera.
+        float flakeSize = min(
+          max(uFlakeSize, uMinFlakeSize * depth * halfInvResX),
+          uMaxFlakeSize * max(depth, 0.0) * halfInvResX
+        );
         
         // Avoid branching with step functions where possible
         float dist;
@@ -169,7 +177,7 @@ void main() {
                            min(1.0, flakeSizeRatio * flakeSizeRatio) * uBrightness;
           // Fade white flakes through alpha: opaque dark RGB creates gray/black
           // tiles over the hero gradient, rather than distant translucent snow.
-          float opacity = clamp(pow(intensity, uGamma), 0.0, 1.0);
+          float opacity = clamp(pow(intensity, uGamma), 0.0, 1.0) * smoothstep(0.15, 0.6, depth);
           gl_FragColor = vec4(uColor, opacity);
           return;
         }
@@ -210,6 +218,7 @@ export default function PixelSnow({
   const materialRef = useRef(null);
   const renderOnceRef = useRef(null);
   const resizeTimeoutRef = useRef(null);
+  const pixelResolutionRef = useRef(pixelResolution);
 
   // Memoize shader variant value
   const variantValue = useMemo(() => {
@@ -235,13 +244,14 @@ export default function PixelSnow({
 
       const w = container.offsetWidth;
       const h = container.offsetHeight;
-      const pixelSize = snowPixelSize(w, material.uniforms.uPixelResolution.value);
+      const pixelSize = snowPixelSize(w, pixelResolutionRef.current);
       const renderWidth = Math.max(1, Math.round(w / pixelSize));
       const renderHeight = Math.max(1, Math.round(h / pixelSize));
       renderer.setSize(renderWidth, renderHeight, false);
       sharpenCanvas(renderer.domElement);
       material.uniforms.uResolution.value.set(renderWidth, renderHeight);
       material.uniforms.uPixelResolution.value = renderWidth;
+      material.uniforms.uMaxFlakeSize.value = 14 * renderWidth / Math.max(1, w);
       renderOnceRef.current?.();
     }, 100);
   }, []);
@@ -282,6 +292,7 @@ export default function PixelSnow({
         uResolution: { value: new Vector2(renderWidth, renderHeight) },
         uFlakeSize: { value: flakeSize },
         uMinFlakeSize: { value: minFlakeSize },
+        uMaxFlakeSize: { value: 14 * renderWidth / Math.max(1, container.offsetWidth) },
         uPixelResolution: { value: renderWidth },
         uSpeed: { value: speed },
         uDepthFade: { value: depthFade },
@@ -329,9 +340,9 @@ export default function PixelSnow({
       unregisterGpu = registerHeroGpu('snow', draw);
     };
     const visibilityObserver = new IntersectionObserver(([entry]) => {
-      isVisibleRef.current = entry.isIntersecting && entry.intersectionRatio >= 0.32;
+      isVisibleRef.current = entry.isIntersecting;
       syncAnimation();
-    }, { threshold: [0, 0.32, 0.6] });
+    }, { rootMargin: "30% 0px", threshold: [0, 0.01, 0.12] });
     visibilityObserver.observe(container);
     document.addEventListener('visibilitychange', syncAnimation);
     preference.addEventListener('change', syncAnimation);
@@ -362,6 +373,7 @@ export default function PixelSnow({
 
   // Update material uniforms when props change
   useEffect(() => {
+    pixelResolutionRef.current = pixelResolution;
     const material = materialRef.current;
     if (!material) return;
 

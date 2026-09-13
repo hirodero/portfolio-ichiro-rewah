@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { journey } from "@/data/journey";
+import { CountUpPhrase } from "./CountUp";
 import JourneyFeature from "./JourneyFeature";
 import ProofImage from "./ProofImage";
 import "./JourneySection.css";
@@ -20,13 +21,13 @@ function RecognitionCard({
   return (
     <article className={`journey-card journey-recognition is-${variant} reveal`}>
       <span className="journey-watermark" aria-hidden="true">
-        <b>{highlight[0]}</b>
-        <b>{highlight[1]}</b>
+        <b><CountUpPhrase text={highlight[0]} /></b>
+        <b><CountUpPhrase text={highlight[1]} /></b>
       </span>
       <header>
         <p className="journey-kicker">{label}</p>
         <p className="journey-meta">
-          <span>{status}</span>
+          <span><CountUpPhrase text={status} /></span>
           <span>{period}</span>
         </p>
         <h3>
@@ -35,7 +36,11 @@ function RecognitionCard({
           ))}
         </h3>
       </header>
-      <p className="journey-highlight">{highlight[0]}<br />{highlight[1]}</p>
+      <p className="journey-highlight">
+        <CountUpPhrase text={highlight[0]} />
+        <br />
+        <CountUpPhrase text={highlight[1]} />
+      </p>
       {variant === "scholarship" ? (
         <div className="journey-recognition-split">
           {proof && (
@@ -45,10 +50,10 @@ function RecognitionCard({
               sizes="(max-width: 700px) 54vw, 180px"
             />
           )}
-          <p className="journey-detail">{detail}</p>
+          <p className="journey-detail"><CountUpPhrase text={detail} /></p>
         </div>
       ) : (
-        <p className="journey-detail">{detail}</p>
+        <p className="journey-detail"><CountUpPhrase text={detail} /></p>
       )}
       {variant === "finalist" && proof && (
         <ProofImage
@@ -57,7 +62,7 @@ function RecognitionCard({
           sizes="(max-width: 700px) 92vw, 380px"
         />
       )}
-      <p>{description}</p>
+      <p><CountUpPhrase text={description} /></p>
     </article>
   );
 }
@@ -94,7 +99,7 @@ function CollaborationCard({
         <span className="journey-times" aria-hidden="true">×</span>
         <span className="journey-partner">RISTEK UI</span>
       </div>
-      <p>{description}</p>
+      <p><CountUpPhrase text={description} /></p>
     </article>
   );
 }

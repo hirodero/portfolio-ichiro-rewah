@@ -8,9 +8,9 @@ const PixelSnow = dynamic(() => import("./PixelSnow"), { ssr: false });
 const LightRays = dynamic(() => import("./LightRays"), { ssr: false });
 
 const DESKTOP_SNOW = {
-  pixelResolution: 480,
-  density: 0.32,
-  farPlane: 16,
+  pixelResolution: 340,
+  density: 0.28,
+  farPlane: 12,
   flakeSize: 0.011,
   minFlakeSize: 1.6,
   depthFade: 6.5,
@@ -18,9 +18,9 @@ const DESKTOP_SNOW = {
 };
 
 const MOBILE_SNOW = {
-  pixelResolution: 200,
-  density: 0.22,
-  farPlane: 12,
+  pixelResolution: 180,
+  density: 0.2,
+  farPlane: 10,
   flakeSize: 0.013,
   minFlakeSize: 1.7,
   depthFade: 5.5,
@@ -32,6 +32,7 @@ export default function SnowBackground() {
   const [supported, setSupported] = useState(false);
   const [raysEnabled, setRaysEnabled] = useState(false);
   const [compact, setCompact] = useState(false);
+  const [intro, setIntro] = useState(true);
 
   useEffect(() => {
     const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -49,18 +50,20 @@ export default function SnowBackground() {
       setRaysEnabled(available && !preference.matches);
     };
     const updateCompact = () => setCompact(compactQuery.matches);
+    const introTimer = window.setTimeout(() => setIntro(false), 1400);
     preference.addEventListener("change", updateMotion);
     compactQuery.addEventListener("change", updateCompact);
 
     const hero = document.querySelector(".hero-shell");
     const io = hero
       ? new IntersectionObserver(([entry]) => {
-          setHeroFocused(entry.isIntersecting && entry.intersectionRatio >= 0.32);
-        }, { threshold: [0, 0.32, 0.55, 0.8] })
+          setHeroFocused(entry.isIntersecting && entry.intersectionRatio >= 0.08);
+        }, { rootMargin: "28% 0px 8% 0px", threshold: [0, 0.08, 0.2, 0.4] })
       : null;
     if (hero && io) io.observe(hero);
 
     return () => {
+      window.clearTimeout(introTimer);
       preference.removeEventListener("change", updateMotion);
       compactQuery.removeEventListener("change", updateCompact);
       io?.disconnect();
@@ -70,7 +73,7 @@ export default function SnowBackground() {
   const snow = compact ? MOBILE_SNOW : DESKTOP_SNOW;
 
   return <>
-    <div className={`rays-background${raysEnabled ? " is-on" : ""}`} aria-hidden="true">
+    <div className={`rays-background${raysEnabled ? " is-on" : ""}${intro && raysEnabled ? " is-intro" : ""}`} aria-hidden="true">
       {raysEnabled && <LightRays
         raysOrigin="top-center"
         raysColor="#ffffff"
@@ -84,7 +87,7 @@ export default function SnowBackground() {
         className="custom-rays"
       />}
     </div>
-    <div className={`snow-background${enabled ? " is-on" : ""}`} aria-hidden="true">
+    <div className={`snow-background${enabled ? " is-on" : ""}${intro && enabled ? " is-intro" : ""}`} aria-hidden="true">
       {enabled && <PixelSnow
         color="#ffffff"
         flakeSize={snow.flakeSize}

@@ -1,0 +1,16 @@
+.about-section,
+.about-toolkit,
+.about-toolkit-icons,
+.hero-content,
+.hero-actions,
+.hero-note {
+  overflow: visible;
+}
+
+/* Preserve the existing About grid while owning its animation lifecycle. */
+.about-motion { display: contents; }
+.about-motion .about-profile,
+.about-motion .about-copy,
+.about-motion .about-details {
+  overflow: visible;
+}

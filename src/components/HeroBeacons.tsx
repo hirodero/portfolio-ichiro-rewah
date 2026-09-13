@@ -41,10 +41,10 @@ export default function HeroBeacons() {
         <SplashCursor
           targetSelector=".hero-shell"
           followPointer
-          DYE_RESOLUTION={384}
-          SIM_RESOLUTION={96}
-          CAPTURE_RESOLUTION={256}
-          PRESSURE_ITERATIONS={12}
+          DYE_RESOLUTION={256}
+          SIM_RESOLUTION={64}
+          CAPTURE_RESOLUTION={192}
+          PRESSURE_ITERATIONS={8}
           SHADING={false}
         />
       ) : null}

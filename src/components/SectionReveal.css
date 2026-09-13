@@ -50,7 +50,6 @@
 .about-copy > p.reveal:nth-of-type(1) { --reveal-delay: 210ms; }
 .about-copy > p.reveal:nth-of-type(2) { --reveal-delay: 270ms; }
 .about-details.reveal { --reveal-delay: 330ms; }
-.about-toolkit.reveal { --reveal-delay: 420ms; }
 
 .work-section .section-heading.reveal { --reveal-delay: 0ms; }
 .work-section .project-card.reveal:nth-child(1) { --reveal-delay: 110ms; }

@@ -49,6 +49,7 @@
   aspect-ratio: 3 / 2;
   pointer-events: none;
   will-change: transform;
+  contain: layout style paint;
 }
 
 .flying-paimon img {
@@ -63,6 +64,10 @@
 
 .flying-paimon img.is-on {
   opacity: 1;
+}
+
+.paimon-wind.has-original .flying-paimon img {
+  mix-blend-mode: screen;
 }
 
 .paimon-scarf-sparkles {
@@ -155,10 +160,19 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .paimon-wind,
-  .flying-paimon,
   .paimon-portal,
-  .paimon-trail-splash {
+  .paimon-trail-splash,
+  .paimon-scarf-sparkles {
     display: none;
   }
+  .paimon-wind { transform: none !important; }
+  .flying-paimon {
+    top: 22%;
+    left: 12%;
+    width: clamp(148px, 20vw, 280px) !important;
+    opacity: 1 !important;
+    transform: none !important;
+    will-change: auto;
+  }
+  .flying-paimon img { transition: none; }
 }

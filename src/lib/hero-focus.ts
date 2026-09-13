@@ -15,6 +15,7 @@ let scrollTimer = 0;
 let gpuRaf = 0;
 let lastLane: HeroGpuLane = "rays";
 let lastScrollY = 0;
+let scrollingUp = false;
 
 export function isHeroFocused() {
   return focused;
@@ -38,8 +39,8 @@ function gpuTick(now: number) {
     return;
   }
 
-  const gap = scrolling ? 48 : 32;
-  const order: HeroGpuLane[] = scrolling
+  const gap = scrolling ? 56 : 40;
+  const order: HeroGpuLane[] = scrolling && !scrollingUp
     ? ["snow"]
     : lastLane === "snow" ? ["rays", "snow"] : ["snow", "rays"];
   for (const lane of order) {
@@ -111,9 +112,10 @@ export function subscribeHeroLive(listener: LiveListener) {
 
 function markScroll(force = false) {
   const y = window.scrollY;
-  const delta = Math.abs(y - lastScrollY);
+  const delta = y - lastScrollY;
+  scrollingUp = delta < 0;
   lastScrollY = y;
-  if (!force && !scrolling && delta < 8) return;
+  if (!force && !scrolling && Math.abs(delta) < 8) return;
   setHeroScrolling(true);
   window.clearTimeout(scrollTimer);
   scrollTimer = window.setTimeout(() => setHeroScrolling(false), 180);

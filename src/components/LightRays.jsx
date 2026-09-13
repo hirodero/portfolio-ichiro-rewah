@@ -67,11 +67,11 @@ const LightRays = ({
     observerRef.current = new IntersectionObserver(
       entries => {
         const entry = entries[0];
-        isVisibleRef.current = entry.isIntersecting && entry.intersectionRatio >= 0.32;
+        isVisibleRef.current = entry.isIntersecting;
         if (isVisibleRef.current) startLoopRef.current();
         else stopLoopRef.current();
       },
-      { threshold: [0, 0.32, 0.6] }
+      { rootMargin: "30% 0px", threshold: [0, 0.01, 0.12] }
     );
 
     observerRef.current.observe(containerRef.current);
@@ -262,11 +262,13 @@ void main() {
         renderer.dpr = 1;
 
         const { clientWidth: wCSS, clientHeight: hCSS } = containerRef.current;
-        renderer.setSize(wCSS, hCSS);
-
-        const dpr = renderer.dpr;
-        const w = wCSS * dpr;
-        const h = hCSS * dpr;
+        const compact = wCSS <= 700 || window.matchMedia("(pointer: coarse)").matches;
+        const scale = compact ? 0.32 : 0.42;
+        const w = Math.max(1, Math.round(wCSS * scale));
+        const h = Math.max(1, Math.round(hCSS * scale));
+        renderer.setSize(w, h);
+        gl.canvas.style.width = "100%";
+        gl.canvas.style.height = "100%";
 
         uniforms.iResolution.value = [w, h];
 
@@ -383,9 +385,9 @@ void main() {
     u.distortion.value = distortion;
     u.lightMode.value = lightMode ? 1.0 : 0.0;
 
-    const { clientWidth: wCSS, clientHeight: hCSS } = containerRef.current;
-    const dpr = renderer.dpr;
-    const { anchor, dir } = getAnchorAndDir(raysOrigin, wCSS * dpr, hCSS * dpr);
+    const w = renderer.gl.canvas.width;
+    const h = renderer.gl.canvas.height;
+    const { anchor, dir } = getAnchorAndDir(raysOrigin, w, h);
     u.rayPos.value = anchor;
     u.rayDir.value = dir;
   }, [

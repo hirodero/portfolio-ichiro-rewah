@@ -14,6 +14,11 @@ function autoBind(instance) {
   });
 }
 
+function galleryStageHeight(width) {
+  const basis = typeof window !== "undefined" ? window.innerWidth : width;
+  return Math.min(300, Math.max(250, Math.round(basis * 0.72)));
+}
+
 function getFontSize(font) {
   const match = font.match(/(\d+)px/);
   return match ? parseInt(match[1], 10) : 30;
@@ -254,7 +259,8 @@ class Media {
   onResize({ screen, viewport } = {}) {
     if (screen) this.screen = screen;
     if (viewport) this.viewport = viewport;
-    this.scale = this.screen.height / 1500;
+    const stage = galleryStageHeight(this.screen.width);
+    this.scale = stage / 1500;
     this.plane.scale.y = (this.viewport.height * (780 * this.scale)) / this.screen.height;
     this.plane.scale.x = (this.viewport.width * (430 * this.scale)) / this.screen.width;
     this.plane.program.uniforms.uPlaneSizes.value = [this.plane.scale.x, this.plane.scale.y];
@@ -340,18 +346,19 @@ class App {
     });
   }
   onResize() {
-    this.screen = {
-      width: this.container.clientWidth,
-      height: this.container.clientHeight
-    };
-    this.renderer.setSize(this.screen.width, this.screen.height);
+    const width = this.container.clientWidth || window.innerWidth;
+    const cssHeight = this.container.clientHeight;
+    const height = galleryStageHeight(width);
+    if (this.viewport && this.screen && Math.abs(this.screen.width - width) < 1) return;
+    this.screen = { width, height };
+    this.renderer.setSize(width, cssHeight > 2 ? cssHeight : height);
     this.camera.perspective({
-      aspect: this.screen.width / this.screen.height
+      aspect: width / height
     });
     const fov = (this.camera.fov * Math.PI) / 180;
-    const height = 2 * Math.tan(fov / 2) * this.camera.position.z;
-    const width = height * this.camera.aspect;
-    this.viewport = { width, height };
+    const viewHeight = 2 * Math.tan(fov / 2) * this.camera.position.z;
+    const viewWidth = viewHeight * this.camera.aspect;
+    this.viewport = { width: viewWidth, height: viewHeight };
     if (this.medias) {
       this.medias.forEach(media => media.onResize({ screen: this.screen, viewport: this.viewport }));
     }
@@ -373,10 +380,13 @@ class App {
   addEventListeners() {
     this.boundOnResize = this.onResize.bind(this);
     window.addEventListener("resize", this.boundOnResize);
+    this.resizeObserver = new ResizeObserver(this.boundOnResize);
+    this.resizeObserver.observe(this.container);
   }
   destroy() {
     window.cancelAnimationFrame(this.raf);
     window.removeEventListener("resize", this.boundOnResize);
+    this.resizeObserver?.disconnect();
     if (this.renderer && this.renderer.gl && this.renderer.gl.canvas.parentNode) {
       this.renderer.gl.canvas.parentNode.removeChild(this.renderer.gl.canvas);
     }

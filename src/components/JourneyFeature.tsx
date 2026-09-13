@@ -1,38 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
 import type { JourneyCommunity } from "@/data/journey";
+import { CountUpPhrase, useCountUp, useInViewReplay } from "./CountUp";
 import ProofImage from "./ProofImage";
 
 interface JourneyFeatureProps {
   item: JourneyCommunity;
-}
-
-function useCountUp(target: number, isActive: boolean) {
-  const [value, setValue] = useState(0);
-
-  useEffect(() => {
-    if (!isActive) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setValue(target);
-      return;
-    }
-
-    const started = performance.now();
-    let frame = 0;
-
-    function tick(now: number) {
-      const progress = Math.min(1, (now - started) / 1100);
-      const eased = 1 - (1 - progress) ** 3;
-      setValue(Math.round(target * eased));
-      if (progress < 1) frame = requestAnimationFrame(tick);
-    }
-
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [isActive, target]);
-
-  return value;
 }
 
 function Stat({ value, label, isActive, featured = false }: { value: number; label: string; isActive: boolean; featured?: boolean }) {
@@ -47,26 +21,16 @@ function Stat({ value, label, isActive, featured = false }: { value: number; lab
 }
 
 export default function JourneyFeature({ item }: JourneyFeatureProps) {
-  const cardRef = useRef<HTMLElement>(null);
-  const [isActive, setIsActive] = useState(false);
+  const { ref: cardRef, isActive } = useInViewReplay<HTMLElement>(0.22);
   const metrics = item.metrics ?? [];
   const proof = item.proofMedia?.[0];
 
   useEffect(() => {
-    const card = cardRef.current;
-    if (!card) return;
-    const host = card;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) setIsActive(true);
-      },
-      { threshold: 0.28 }
-    );
-    observer.observe(host);
+    const host = cardRef.current;
+    if (!host) return;
 
     if (window.matchMedia("(prefers-reduced-motion: reduce), (pointer: coarse)").matches) {
-      return () => observer.disconnect();
+      return;
     }
 
     let targetX = 0.42;
@@ -95,11 +59,10 @@ export default function JourneyFeature({ item }: JourneyFeatureProps) {
     frame = requestAnimationFrame(tick);
 
     return () => {
-      observer.disconnect();
       host.removeEventListener("pointermove", onMove);
       cancelAnimationFrame(frame);
     };
-  }, []);
+  }, [cardRef]);
 
   return (
     <article ref={cardRef} className="journey-card journey-feature reveal">
@@ -125,7 +88,7 @@ export default function JourneyFeature({ item }: JourneyFeatureProps) {
           ))}
         </div>
       )}
-      <p>{item.description}</p>
+      <p><CountUpPhrase text={item.description} isActive={isActive} /></p>
     </article>
   );
 }

@@ -75,12 +75,32 @@
   box-shadow: 0 0 0 2px #19171f;
 }
 
-.site-header .brand .pill {
+.site-header nav .brand .brand-wordmark {
+  display: inline-flex;
+  align-items: center;
+  color: #f2edf8;
+  background: transparent;
   font-size: 21px;
   font-weight: 600;
   letter-spacing: -.8px;
-  padding: 0 20px;
+  text-decoration: none;
+  white-space: nowrap;
   height: var(--nav-h);
+}
+
+.site-header nav .brand-wordmark > .brand-dot {
+  margin-left: 0;
+  color: #b6a1cc;
+}
+
+.site-header nav .brand-wordmark:hover {
+  color: #cfc1df;
+}
+
+.site-header nav .brand-wordmark:focus-visible {
+  outline: 2px solid #b6a1cc;
+  outline-offset: 5px;
+  border-radius: 3px;
 }
 
 .site-header .pill .hover-circle {
@@ -136,9 +156,8 @@
     --pill-pad-x: 12px;
   }
 
-  .site-header .brand .pill {
+  .site-header nav .brand .brand-wordmark {
     font-size: 18px;
-    padding: 0 14px;
   }
 }
 
@@ -156,11 +175,10 @@
     gap: 8px;
   }
 
-  .site-header .brand a.pill {
+  .site-header nav .brand .brand-wordmark {
     display: inline-flex;
     font-size: 14px;
     height: 36px;
-    padding: 0 10px;
   }
 
   .site-header .pill-nav-items {
