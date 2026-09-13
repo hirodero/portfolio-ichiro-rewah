@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
+import { skipGpuFx } from "@/lib/device";
 import { setHeroFocused, setHeroGpuLite } from "@/lib/hero-focus";
 
 const PixelSnow = dynamic(() => import("./PixelSnow"), { ssr: false });
@@ -64,12 +65,15 @@ export default function SnowBackground() {
   useEffect(() => {
     const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
     const compactQuery = window.matchMedia("(max-width: 700px), (pointer: coarse)");
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("webgl2");
-    const available = Boolean(context);
-    const liteGpu = detectLiteGpu();
-    setSupported(available);
-    context?.getExtension("WEBGL_lose_context")?.loseContext();
+    const liteGpu = detectLiteGpu() || skipGpuFx();
+    let available = false;
+    if (!skipGpuFx()) {
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("webgl") || canvas.getContext("webgl2");
+      available = Boolean(context);
+      context?.getExtension("WEBGL_lose_context")?.loseContext();
+    }
+    setSupported(!preference.matches);
     setCompact(compactQuery.matches);
     setLite(liteGpu);
     setHeroGpuLite(liteGpu);

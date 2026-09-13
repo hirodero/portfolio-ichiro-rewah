@@ -18,6 +18,9 @@ export default function ContactPlasma() {
     const update = () => setInteractive(!touchy.matches);
     update();
     touchy.addEventListener("change", update);
+    if (touchy.matches) {
+      return () => touchy.removeEventListener("change", update);
+    }
 
     const io = new IntersectionObserver(
       ([entry]) => {

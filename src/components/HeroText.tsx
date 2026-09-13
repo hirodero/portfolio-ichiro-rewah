@@ -46,6 +46,7 @@ export default function HeroText({
     const isLite =
       !particles
       || window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      || window.matchMedia("(max-width: 700px), (pointer: coarse)").matches
       || window.self !== window.top
       || new URLSearchParams(window.location.search).has("preview");
     if (isLite) {
@@ -63,7 +64,7 @@ export default function HeroText({
       window.clearTimeout(fadeTimer);
       window.clearTimeout(settleTimer);
     };
-  }, [gatherDuration, stagger, fadeRatio]);
+  }, [gatherDuration, stagger, fadeRatio, particles]);
 
   return (
     <span className={`hero-text ${className} is-${phase}`}>

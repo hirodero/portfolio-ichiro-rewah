@@ -304,9 +304,52 @@ h1 .hero-title-line:last-child {
     width: 100%;
     height: clamp(250px, 72vw, 300px);
     margin: 0 0 58px;
+    overflow: hidden;
     -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 16%, #000 84%, transparent 100%);
     mask-image: linear-gradient(to right, transparent 0%, #000 16%, #000 84%, transparent 100%);
   }
+  .hero-gallery-track {
+    display: flex;
+    align-items: stretch;
+    gap: 14px;
+    width: max-content;
+    height: 100%;
+    animation: hero-gallery-slide 42s linear infinite;
+  }
+  .hero-gallery-card {
+    position: relative;
+    flex: 0 0 auto;
+    width: min(44vw, 168px);
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    border: 1px solid #3a3344;
+    border-radius: 16px;
+    background: #1a1620;
+  }
+  .hero-gallery-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .hero-gallery-card figcaption {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    bottom: 12px;
+    color: #f4eefc;
+    font-size: 11px;
+    font-weight: 600;
+    text-shadow: 0 1px 8px #100e15cc;
+  }
+  @keyframes hero-gallery-slide {
+    to { transform: translateX(-50%); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hero-gallery-track { animation: none; }
+  }
+  .snow-toggle { display: none; }
 }
 
 .project-art img {

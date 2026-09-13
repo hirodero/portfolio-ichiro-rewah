@@ -1,8 +1,11 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
-import GradientWaves from "./GradientWaves";
+import { skipGpuFx } from "@/lib/device";
 import { isHeroFocused, isHeroScrolling, subscribeHeroLive } from "@/lib/hero-focus";
+
+const GradientWaves = dynamic(() => import("./GradientWaves"), { ssr: false });
 
 export default function AboutWaves() {
   const [isReady, setIsReady] = useState(false);
@@ -11,6 +14,15 @@ export default function AboutWaves() {
   const [scrolling, setScrolling] = useState(false);
 
   useEffect(() => {
+    const compactQuery = window.matchMedia("(max-width: 700px), (pointer: coarse)");
+    const updateCompact = () => setCompact(compactQuery.matches);
+    updateCompact();
+    compactQuery.addEventListener("change", updateCompact);
+
+    if (skipGpuFx()) {
+      return () => compactQuery.removeEventListener("change", updateCompact);
+    }
+
     let idleId = 0;
     let timeoutId = 0;
     let warmed = false;
@@ -26,11 +38,6 @@ export default function AboutWaves() {
     } else {
       timeoutId = window.setTimeout(warm, 80);
     }
-
-    const compactQuery = window.matchMedia("(max-width: 700px), (pointer: coarse)");
-    const updateCompact = () => setCompact(compactQuery.matches);
-    updateCompact();
-    compactQuery.addEventListener("change", updateCompact);
 
     const about = document.getElementById("about");
     const io = about

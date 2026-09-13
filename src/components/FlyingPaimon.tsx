@@ -90,6 +90,11 @@ export default function FlyingPaimon({
   const [leftSrc, setLeftSrc] = useState(LEFT_SRC);
 
   useEffect(() => {
+    if (window.matchMedia("(max-width: 700px), (pointer: coarse)").matches) {
+      setAssetsReady(true);
+      return undefined;
+    }
+
     let isActive = true;
     Promise.all([punchBlack(RIGHT_SRC), punchBlack(LEFT_SRC)]).then(([right, left]) => {
       if (!isActive) return;

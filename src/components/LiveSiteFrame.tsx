@@ -68,7 +68,9 @@ export function LiveSiteFrame({ src, fallbackSrc, title }: LiveSiteFrameProps) {
 
   useEffect(() => {
     const frame = frameRef.current;
-    const staticPreview = !src || isNestedPreview();
+    const staticPreview = !src
+      || isNestedPreview()
+      || window.matchMedia("(max-width: 700px), (pointer: coarse)").matches;
     setIsStatic(staticPreview);
     if (!frame || staticPreview) return;
 
