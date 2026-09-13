@@ -42,7 +42,8 @@ export default function HeroWind() {
     let travel = Math.max(hero.offsetHeight * 0.68, 1);
 
     const readProgress = () => {
-      return Math.min(1, Math.max(0, window.scrollY / travel));
+      const startAt = window.innerWidth <= 700 ? 40 : 12;
+      return Math.min(1, Math.max(0, (window.scrollY - startAt) / travel));
     };
 
     const apply = () => {

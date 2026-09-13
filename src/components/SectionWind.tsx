@@ -101,9 +101,9 @@ export default function SectionWind({ children, variant = "about" }: SectionWind
     const amps = () => {
       const small = compact();
       return {
-        x: small ? 40 : 62,
-        dip: small ? 74 : 108,
-        lift: small ? 168 : 236
+        x: small ? 28 : 62,
+        dip: small ? 48 : 108,
+        lift: small ? 120 : 236
       };
     };
 
@@ -137,14 +137,15 @@ export default function SectionWind({ children, variant = "about" }: SectionWind
     let downLock = 0;
 
     const noteDirection = () => {
-      const y = window.scrollY;
+      const y = Math.max(0, window.scrollY);
       const dy = y - lastY;
       lastY = y;
       const now = performance.now();
-      if (dy > 4) {
+      const jitter = compact() ? 12 : 4;
+      if (dy > jitter) {
         goingDown = true;
         downLock = now + 90;
-      } else if (dy < -4 && now > downLock) {
+      } else if (dy < -jitter && now > downLock) {
         goingDown = false;
       }
     };
@@ -152,14 +153,21 @@ export default function SectionWind({ children, variant = "about" }: SectionWind
     const readScroll = () => {
       noteDirection();
       const fold = window.innerHeight;
+      const small = compact();
+
+      if (variant === "hero") {
+        const y = Math.max(0, window.scrollY);
+        const startAt = small ? 40 : 20;
+        if (y <= startAt || !goingDown) return { fly: 0, returning: true };
+        const peakAt = fold * (small ? 0.44 : 0.32);
+        return { fly: clamp((y - startAt) / peakAt), returning: false };
+      }
+
       const box = host.getBoundingClientRect();
       const leaving = box.bottom <= fold + 12;
-
       if (!leaving || !goingDown) return { fly: 0, returning: true };
-
       const travel = fold + 12 - box.bottom;
-      const peakAt = fold * 0.32;
-      return { fly: clamp(travel / peakAt), returning: false };
+      return { fly: clamp(travel / (fold * 0.32)), returning: false };
     };
 
     const styleOf = (piece: Piece) => {
@@ -208,8 +216,9 @@ export default function SectionWind({ children, variant = "about" }: SectionWind
           piece.y.v *= 0.22;
           piece.kicked = false;
         } else if (!piece.kicked && local > 0.02 && scroll.fly > prevFly) {
-          piece.y.v += size.dip * 5.2;
-          piece.x.v += piece.xLane * size.x * 1.8;
+          const punch = compact() ? 2.2 : 5.2;
+          piece.y.v += size.dip * punch;
+          piece.x.v += piece.xLane * size.x * (compact() ? 0.9 : 1.8);
           piece.kicked = true;
         }
 
@@ -217,10 +226,11 @@ export default function SectionWind({ children, variant = "about" }: SectionWind
           ? { x: 0, y: 0 }
           : rocket(local, piece.xLane * size.x, size.dip, size.lift);
 
-        const stiffness = scroll.returning ? 20 : 10.2;
-        const damping = scroll.returning ? 8.4 : 3.5;
+        const mobile = compact();
+        const stiffness = scroll.returning ? (mobile ? 18 : 20) : (mobile ? 8.2 : 10.2);
+        const damping = scroll.returning ? (mobile ? 9.2 : 8.4) : (mobile ? 4.6 : 3.5);
         const movingX = stepSpring(piece.x, target.x, dt, stiffness, damping);
-        const movingY = stepSpring(piece.y, target.y, dt, scroll.returning ? 22 : 11, damping);
+        const movingY = stepSpring(piece.y, target.y, dt, scroll.returning ? (mobile ? 19 : 22) : (mobile ? 9 : 11), damping);
         apply(piece, styleOf(piece));
         busy ||= movingX || movingY || scroll.fly > 0;
       }
@@ -241,7 +251,7 @@ export default function SectionWind({ children, variant = "about" }: SectionWind
     });
     observer.observe(host, { childList: true, subtree: true });
 
-    kick();
+    if (variant !== "hero") kick();
     window.addEventListener("scroll", kick, { passive: true });
     window.addEventListener("resize", kick, { passive: true });
     document.addEventListener("visibilitychange", kick);
