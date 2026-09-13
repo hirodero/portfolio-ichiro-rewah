@@ -16,6 +16,15 @@ let gpuRaf = 0;
 let lastLane: HeroGpuLane = "rays";
 let lastScrollY = 0;
 let scrollingUp = false;
+let liteGpu = false;
+
+export function isHeroGpuLite() {
+  return liteGpu;
+}
+
+export function setHeroGpuLite(next: boolean) {
+  liteGpu = next;
+}
 
 export function isHeroFocused() {
   return focused;
@@ -39,8 +48,8 @@ function gpuTick(now: number) {
     return;
   }
 
-  const gap = scrolling ? 56 : 40;
-  const order: HeroGpuLane[] = scrolling && !scrollingUp
+  const gap = liteGpu ? (scrolling ? 90 : 70) : scrolling ? 56 : 40;
+  const order: HeroGpuLane[] = liteGpu || (scrolling && !scrollingUp)
     ? ["snow"]
     : lastLane === "snow" ? ["rays", "snow"] : ["snow", "rays"];
   for (const lane of order) {

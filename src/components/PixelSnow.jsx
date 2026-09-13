@@ -13,12 +13,10 @@ import {
   WebGLRenderer
 } from 'three';
 
-import { registerHeroGpu } from '@/lib/hero-focus';
+import { isHeroGpuLite, isHeroScrolling, registerHeroGpu } from '@/lib/hero-focus';
 import './PixelSnow.css';
 
-function snowPixelSize(width, resolution) {
-  const compact = width < 720;
-  const minBlock = compact ? 3 : 2;
+function snowPixelSize(width, resolution, minBlock = 2) {
   return Math.max(minBlock, Math.round(width / Math.max(1, resolution)));
 }
 
@@ -51,6 +49,7 @@ uniform float uGamma;
 uniform float uDensity;
 uniform float uVariant;
 uniform float uDirection;
+uniform float uMaxSteps;
 
 // Precomputed constants
 #define PI 3.14159265
@@ -130,6 +129,7 @@ void main() {
 
   float t = 0.0;
   for (int i = 0; i < 72; i++) {
+    if (float(i) >= uMaxSteps) break;
     if (t >= uFarPlane) break;
     
     vec3 fpos = floor(pos);
@@ -208,6 +208,8 @@ export default function PixelSnow({
   density = 0.3,
   variant = 'square',
   direction = 125,
+  maxSteps = 48,
+  minBlock = 3,
   className = '',
   style = {}
 }) {
@@ -219,6 +221,7 @@ export default function PixelSnow({
   const renderOnceRef = useRef(null);
   const resizeTimeoutRef = useRef(null);
   const pixelResolutionRef = useRef(pixelResolution);
+  const minBlockRef = useRef(minBlock);
 
   // Memoize shader variant value
   const variantValue = useMemo(() => {
@@ -244,7 +247,7 @@ export default function PixelSnow({
 
       const w = container.offsetWidth;
       const h = container.offsetHeight;
-      const pixelSize = snowPixelSize(w, pixelResolutionRef.current);
+      const pixelSize = snowPixelSize(w, pixelResolutionRef.current, minBlockRef.current);
       const renderWidth = Math.max(1, Math.round(w / pixelSize));
       const renderHeight = Math.max(1, Math.round(h / pixelSize));
       renderer.setSize(renderWidth, renderHeight, false);
@@ -267,14 +270,14 @@ export default function PixelSnow({
       antialias: false,
       alpha: true,
       premultipliedAlpha: false,
-      powerPreference: 'high-performance',
+      powerPreference: isHeroGpuLite() ? 'low-power' : 'high-performance',
       stencil: false,
       depth: false
     });
 
     // The shader already quantizes to this grid. Rendering it at full Retina
     // resolution repeats the same expensive ray traversal for each pixel block.
-    const pixelSize = snowPixelSize(container.offsetWidth, pixelResolution);
+    const pixelSize = snowPixelSize(container.offsetWidth, pixelResolution, minBlock);
     const renderWidth = Math.max(1, Math.round(container.offsetWidth / pixelSize));
     const renderHeight = Math.max(1, Math.round(container.offsetHeight / pixelSize));
     renderer.setPixelRatio(1);
@@ -302,7 +305,8 @@ export default function PixelSnow({
         uGamma: { value: gamma },
         uDensity: { value: density },
         uVariant: { value: variantValue },
-        uDirection: { value: (direction * Math.PI) / 180 }
+        uDirection: { value: (direction * Math.PI) / 180 },
+        uMaxSteps: { value: maxSteps }
       },
       transparent: true
     });
@@ -322,6 +326,7 @@ export default function PixelSnow({
     isVisibleRef.current = false;
 
     const draw = now => {
+      if (isHeroGpuLite() && isHeroScrolling()) return;
       if (previousTime !== null) elapsed += Math.min((now - previousTime) / 1000, 0.05);
       previousTime = now;
       material.uniforms.uTime.value = elapsed;
@@ -374,6 +379,7 @@ export default function PixelSnow({
   // Update material uniforms when props change
   useEffect(() => {
     pixelResolutionRef.current = pixelResolution;
+    minBlockRef.current = minBlock;
     const material = materialRef.current;
     if (!material) return;
 
@@ -387,6 +393,7 @@ export default function PixelSnow({
     material.uniforms.uDensity.value = density;
     material.uniforms.uVariant.value = variantValue;
     material.uniforms.uDirection.value = (direction * Math.PI) / 180;
+    material.uniforms.uMaxSteps.value = maxSteps;
     material.uniforms.uColor.value.copy(colorVector);
     handleResize();
   }, [
@@ -401,6 +408,8 @@ export default function PixelSnow({
     density,
     variantValue,
     direction,
+    maxSteps,
+    minBlock,
     colorVector,
     handleResize
   ]);

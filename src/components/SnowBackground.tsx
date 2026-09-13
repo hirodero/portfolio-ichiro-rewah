@@ -2,36 +2,63 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
-import { setHeroFocused } from "@/lib/hero-focus";
+import { setHeroFocused, setHeroGpuLite } from "@/lib/hero-focus";
 
 const PixelSnow = dynamic(() => import("./PixelSnow"), { ssr: false });
 const LightRays = dynamic(() => import("./LightRays"), { ssr: false });
 
 const DESKTOP_SNOW = {
-  pixelResolution: 340,
-  density: 0.28,
-  farPlane: 12,
-  flakeSize: 0.011,
-  minFlakeSize: 1.6,
-  depthFade: 6.5,
-  brightness: 1.2
+  pixelResolution: 240,
+  density: 0.24,
+  farPlane: 10,
+  flakeSize: 0.012,
+  minFlakeSize: 1.7,
+  depthFade: 6.2,
+  brightness: 1.2,
+  maxSteps: 48,
+  minBlock: 3
 };
 
 const MOBILE_SNOW = {
-  pixelResolution: 180,
-  density: 0.2,
-  farPlane: 10,
-  flakeSize: 0.013,
-  minFlakeSize: 1.7,
-  depthFade: 5.5,
-  brightness: 1.22
+  pixelResolution: 140,
+  density: 0.16,
+  farPlane: 8,
+  flakeSize: 0.014,
+  minFlakeSize: 1.8,
+  depthFade: 5.2,
+  brightness: 1.22,
+  maxSteps: 36,
+  minBlock: 4
 };
+
+const LITE_SNOW = {
+  pixelResolution: 110,
+  density: 0.14,
+  farPlane: 7,
+  flakeSize: 0.015,
+  minFlakeSize: 1.9,
+  depthFade: 5,
+  brightness: 1.24,
+  maxSteps: 28,
+  minBlock: 5
+};
+
+function detectLiteGpu() {
+  const nav = navigator as Navigator & { deviceMemory?: number; connection?: { saveData?: boolean } };
+  if (nav.connection?.saveData) return true;
+  if (typeof nav.deviceMemory === "number" && nav.deviceMemory <= 4) return true;
+  const coarse = window.matchMedia("(pointer: coarse)").matches;
+  const narrow = window.matchMedia("(max-width: 900px)").matches;
+  if (typeof nav.hardwareConcurrency === "number" && nav.hardwareConcurrency <= 4 && (coarse || narrow)) return true;
+  return coarse && narrow;
+}
 
 export default function SnowBackground() {
   const [enabled, setEnabled] = useState(false);
   const [supported, setSupported] = useState(false);
   const [raysEnabled, setRaysEnabled] = useState(false);
   const [compact, setCompact] = useState(false);
+  const [lite, setLite] = useState(false);
   const [intro, setIntro] = useState(true);
 
   useEffect(() => {
@@ -40,14 +67,17 @@ export default function SnowBackground() {
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("webgl2");
     const available = Boolean(context);
+    const liteGpu = detectLiteGpu();
     setSupported(available);
     context?.getExtension("WEBGL_lose_context")?.loseContext();
     setCompact(compactQuery.matches);
+    setLite(liteGpu);
+    setHeroGpuLite(liteGpu);
     setEnabled(available && !preference.matches);
-    setRaysEnabled(available && !preference.matches);
+    setRaysEnabled(available && !preference.matches && !liteGpu);
     const updateMotion = () => {
       setEnabled(available && !preference.matches);
-      setRaysEnabled(available && !preference.matches);
+      setRaysEnabled(available && !preference.matches && !liteGpu);
     };
     const updateCompact = () => setCompact(compactQuery.matches);
     const introTimer = window.setTimeout(() => setIntro(false), 1400);
@@ -70,7 +100,7 @@ export default function SnowBackground() {
     };
   }, []);
 
-  const snow = compact ? MOBILE_SNOW : DESKTOP_SNOW;
+  const snow = lite ? LITE_SNOW : compact ? MOBILE_SNOW : DESKTOP_SNOW;
 
   return <>
     <div className={`rays-background${raysEnabled ? " is-on" : ""}${intro && raysEnabled ? " is-intro" : ""}`} aria-hidden="true">
@@ -99,6 +129,8 @@ export default function SnowBackground() {
         depthFade={snow.depthFade}
         direction={125}
         brightness={snow.brightness}
+        maxSteps={snow.maxSteps}
+        minBlock={snow.minBlock}
       />}
     </div>
     {supported && <button className="snow-toggle" type="button" aria-pressed={enabled} onClick={() => setEnabled(value => !value)}>
