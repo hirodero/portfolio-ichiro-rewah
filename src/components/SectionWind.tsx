@@ -95,6 +95,7 @@ export default function SectionWind({ children, variant = "about" }: SectionWind
       : hostRef.current?.closest(".about-section");
     if (!(host instanceof HTMLElement)) return undefined;
     if (window.self !== window.top || new URLSearchParams(window.location.search).has("preview")) return undefined;
+    if (window.matchMedia("(max-width: 700px)").matches) return undefined;
 
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const compact = () => window.innerWidth <= 700;

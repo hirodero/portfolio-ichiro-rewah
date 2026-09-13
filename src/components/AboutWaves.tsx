@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import GradientWaves from "./GradientWaves";
-import { isHeroFocused, subscribeHeroLive } from "@/lib/hero-focus";
+import { isHeroFocused, isHeroScrolling, subscribeHeroLive } from "@/lib/hero-focus";
 
 export default function AboutWaves() {
   const [isReady, setIsReady] = useState(false);
   const [heroFocused, setHeroFocused] = useState(true);
+  const [compact, setCompact] = useState(false);
+  const [scrolling, setScrolling] = useState(false);
 
   useEffect(() => {
     let idleId = 0;
@@ -25,6 +27,11 @@ export default function AboutWaves() {
       timeoutId = window.setTimeout(warm, 80);
     }
 
+    const compactQuery = window.matchMedia("(max-width: 700px), (pointer: coarse)");
+    const updateCompact = () => setCompact(compactQuery.matches);
+    updateCompact();
+    compactQuery.addEventListener("change", updateCompact);
+
     const about = document.getElementById("about");
     const io = about
       ? new IntersectionObserver(([entry]) => {
@@ -35,9 +42,11 @@ export default function AboutWaves() {
 
     const unsub = subscribeHeroLive(() => {
       setHeroFocused(isHeroFocused());
+      setScrolling(isHeroScrolling());
     });
 
     return () => {
+      compactQuery.removeEventListener("change", updateCompact);
       io?.disconnect();
       unsub();
       if (idleId) window.cancelIdleCallback?.(idleId);
@@ -62,14 +71,16 @@ export default function AboutWaves() {
           zoom={1}
           height={5.5}
           fogDepth={15}
-          detail="medium"
+          detail={compact ? "low" : "medium"}
           brightness={0.92}
           opacity={0.88}
-          mouseInteraction={true}
-          parallaxStrength={0.5}
-          grain={true}
+          mouseInteraction={!compact}
+          parallaxStrength={compact ? 0 : 0.5}
+          grain={!compact}
           grainIntensity={0.05}
-          paused={heroFocused}
+          maxDpr={compact ? 1 : 2}
+          resolutionScale={compact ? 0.52 : 1}
+          paused={heroFocused || (compact && scrolling)}
         />
       ) : null}
     </div>

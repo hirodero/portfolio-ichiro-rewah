@@ -3,6 +3,7 @@
 import { Camera, Mesh, Plane, Program, Renderer, Texture, Transform } from "ogl";
 import { useEffect, useRef } from "react";
 
+import { isHeroLive, isHeroScrolling, subscribeHeroLive } from "@/lib/hero-focus";
 import "./CircularGallery.css";
 
 function autoBind(instance) {
@@ -289,6 +290,9 @@ class App {
     this.scrollSpeed = scrollSpeed;
     this.autoSpeed = autoSpeed;
     this.lastFrame = performance.now();
+    this.paused = false;
+    this.visible = true;
+    this.boundUpdate = this.update.bind(this);
     this.scroll = { ease: scrollEase, current: 0, target: 0, last: 0 };
     this.createRenderer();
     this.createCamera();
@@ -299,11 +303,26 @@ class App {
     this.update();
     this.addEventListeners();
   }
+  setPaused(next) {
+    if (this.paused === next) return;
+    this.paused = next;
+    if (next) {
+      if (this.raf) {
+        window.cancelAnimationFrame(this.raf);
+        this.raf = 0;
+      }
+      return;
+    }
+    if (!this.raf) {
+      this.lastFrame = performance.now();
+      this.raf = window.requestAnimationFrame(this.boundUpdate);
+    }
+  }
   createRenderer() {
     this.renderer = new Renderer({
       alpha: true,
-      antialias: true,
-      dpr: Math.min(window.devicePixelRatio || 1, 2)
+      antialias: false,
+      dpr: 1
     });
     this.gl = this.renderer.gl;
     this.gl.clearColor(0, 0, 0, 0);
@@ -319,8 +338,8 @@ class App {
   }
   createGeometry() {
     this.planeGeometry = new Plane(this.gl, {
-      heightSegments: 16,
-      widthSegments: 24
+      heightSegments: 8,
+      widthSegments: 12
     });
   }
   createMedias(items, bend = 1, textColor, borderRadius, font) {
@@ -364,6 +383,10 @@ class App {
     }
   }
   update() {
+    if (this.paused) {
+      this.raf = 0;
+      return;
+    }
     const now = performance.now();
     const delta = Math.min((now - this.lastFrame) / 16.67, 2);
     this.lastFrame = now;
@@ -375,7 +398,7 @@ class App {
     }
     this.renderer.render({ scene: this.scene, camera: this.camera });
     this.scroll.last = this.scroll.current;
-    this.raf = window.requestAnimationFrame(this.update.bind(this));
+    this.raf = window.requestAnimationFrame(this.boundUpdate);
   }
   addEventListeners() {
     this.boundOnResize = this.onResize.bind(this);
@@ -407,7 +430,8 @@ export default function CircularGallery({
 
   useEffect(() => {
     if (!containerRef.current) return;
-    const app = new App(containerRef.current, {
+    const container = containerRef.current;
+    const app = new App(container, {
       items,
       bend,
       textColor,
@@ -417,7 +441,22 @@ export default function CircularGallery({
       scrollEase,
       autoSpeed
     });
-    return () => app.destroy();
+
+    const sync = () => {
+      app.setPaused(!app.visible || !isHeroLive() || isHeroScrolling());
+    };
+    const io = new IntersectionObserver(([entry]) => {
+      app.visible = entry.isIntersecting;
+      sync();
+    }, { threshold: 0.04 });
+    io.observe(container);
+    const unsub = subscribeHeroLive(sync);
+
+    return () => {
+      unsub();
+      io.disconnect();
+      app.destroy();
+    };
   }, [items, bend, textColor, borderRadius, font, scrollSpeed, scrollEase, autoSpeed]);
 
   return (

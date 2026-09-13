@@ -8,10 +8,16 @@ const Plasma = dynamic(() => import("./Plasma"), { ssr: false });
 export default function ContactPlasma() {
   const ref = useRef<HTMLDivElement>(null);
   const [isArmed, setIsArmed] = useState(false);
+  const [interactive, setInteractive] = useState(false);
 
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
+
+    const touchy = window.matchMedia("(pointer: coarse), (max-width: 700px)");
+    const update = () => setInteractive(!touchy.matches);
+    update();
+    touchy.addEventListener("change", update);
 
     const io = new IntersectionObserver(
       ([entry]) => {
@@ -21,7 +27,10 @@ export default function ContactPlasma() {
     );
 
     io.observe(node);
-    return () => io.disconnect();
+    return () => {
+      touchy.removeEventListener("change", update);
+      io.disconnect();
+    };
   }, []);
 
   return (
@@ -33,7 +42,7 @@ export default function ContactPlasma() {
           direction="forward"
           scale={1.1}
           opacity={1}
-          mouseInteractive={true}
+          mouseInteractive={interactive}
         />
       ) : null}
     </div>

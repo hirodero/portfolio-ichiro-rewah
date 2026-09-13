@@ -46,11 +46,13 @@ export default function HeroWind() {
       return Math.min(1, Math.max(0, (window.scrollY - startAt) / travel));
     };
 
-    const apply = () => {
+    const apply = (moveSnow: boolean) => {
       if (!(snowEl instanceof HTMLElement)) snowEl = hero.querySelector(".snow-background");
       if (!(paimonEl instanceof HTMLElement)) paimonEl = hero.querySelector(".paimon-wind");
       if (snowEl instanceof HTMLElement) {
-        snowEl.style.transform = `translate3d(${snowX.p.toFixed(2)}px, ${snowY.p.toFixed(2)}px, 0)`;
+        snowEl.style.transform = moveSnow
+          ? `translate3d(${snowX.p.toFixed(2)}px, ${snowY.p.toFixed(2)}px, 0)`
+          : "";
       }
       if (paimonEl instanceof HTMLElement) {
         paimonEl.style.transform = `translate3d(${paimonX.p.toFixed(2)}px, ${paimonY.p.toFixed(2)}px, 0) rotate(${paimonRot.p.toFixed(3)}deg)`;
@@ -74,36 +76,37 @@ export default function HeroWind() {
 
       const lift = Math.pow(Math.max(0, progress - 0.09), 1.38);
       const snowRise = lift * (compact ? 180 : 300);
-      const paimonRise = lift * (compact ? 230 : 380);
-      const sway = Math.sin(progress * Math.PI) * (compact ? 16 : 28);
+      const paimonRise = lift * (compact ? 140 : 380);
+      const sway = Math.sin(progress * Math.PI) * (compact ? 8 : 28);
 
       let targetSnowY = -snowRise;
       let targetSnowX = sway * (goingDown ? 0.75 : 0.4);
       let targetPaimonY = -paimonRise;
       let targetPaimonX = sway * (goingDown ? 1 : 0.45);
-      let targetPaimonRot = progress * -9;
+      let targetPaimonRot = progress * (compact ? -4 : -9);
 
-      if (goingDown) {
+      if (goingDown && !compact) {
         const dipWave = Math.sin(Math.min(progress / 0.18, 1) * Math.PI);
-        const gust = Math.min(Math.max(0, velocity) * (compact ? 38 : 58), compact ? 56 : 100);
-        targetSnowY += dipWave * (compact ? 56 : 92) + gust * 0.55;
-        targetPaimonY += dipWave * (compact ? 170 : 286) + gust * 1.55;
+        const gust = Math.min(Math.max(0, velocity) * 58, 100);
+        targetSnowY += dipWave * 92 + gust * 0.55;
+        targetPaimonY += dipWave * 286 + gust * 1.55;
         targetPaimonRot -= Math.min(Math.max(velocity, 0), 1.8) * 2.6;
       }
 
       const stiffness = goingDown ? 15 : 26;
       const damping = goingDown ? 5.8 : 11.4;
-      stepSpring(snowY, targetSnowY, dt, stiffness, damping);
-      stepSpring(snowX, targetSnowX, dt, goingDown ? 13 : 24, damping);
+      if (!compact) {
+        stepSpring(snowY, targetSnowY, dt, stiffness, damping);
+        stepSpring(snowX, targetSnowX, dt, goingDown ? 13 : 24, damping);
+      }
       stepSpring(paimonY, targetPaimonY, dt, goingDown ? 14 : 26, goingDown ? 4.2 : 11);
       stepSpring(paimonX, targetPaimonX, dt, goingDown ? 12 : 22, goingDown ? 4.5 : 10.6);
       stepSpring(paimonRot, targetPaimonRot, dt, goingDown ? 11 : 22, goingDown ? 4.4 : 10.8);
-      apply();
+      apply(!compact);
 
       const idle =
         now - lastInput > 360
-        && settled(snowY, targetSnowY)
-        && settled(snowX, targetSnowX)
+        && (compact || (settled(snowY, targetSnowY) && settled(snowX, targetSnowX)))
         && settled(paimonY, targetPaimonY)
         && settled(paimonX, targetPaimonX)
         && settled(paimonRot, targetPaimonRot);
@@ -125,7 +128,7 @@ export default function HeroWind() {
     window.addEventListener("resize", onResize, { passive: true });
     lastRaw = readProgress();
     progress = lastRaw;
-    apply();
+    apply(window.innerWidth > 700);
 
     return () => {
       window.removeEventListener("scroll", kick);

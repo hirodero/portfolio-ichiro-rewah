@@ -14,7 +14,8 @@ export default function HeroBeacons() {
 
   useEffect(() => {
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (motion.matches) return undefined;
+    const touchy = window.matchMedia("(pointer: coarse), (max-width: 700px)");
+    if (motion.matches || touchy.matches) return undefined;
 
     const hero = document.querySelector(".hero-shell");
     const arm = () => {

@@ -245,8 +245,10 @@ const GradientWaves = ({
       targetMouse[0] = 0.5;
       targetMouse[1] = 0.5;
     };
-    pointerHost.addEventListener("pointermove", onPointerMove, { passive: true });
-    pointerHost.addEventListener("pointerleave", onPointerLeave);
+    if (mouseInteraction) {
+      pointerHost.addEventListener("pointermove", onPointerMove, { passive: true });
+      pointerHost.addEventListener("pointerleave", onPointerLeave);
+    }
 
     let raf = 0;
     let isVisible = true;
@@ -255,7 +257,7 @@ const GradientWaves = ({
 
     let lastDraw = 0;
     const loop = t => {
-      const gap = isHeroScrolling() ? 40 : 32;
+      const gap = isHeroScrolling() ? 56 : 36;
       if (t - lastDraw < gap) {
         raf = requestAnimationFrame(loop);
         return;
@@ -310,8 +312,10 @@ const GradientWaves = ({
       ro.disconnect();
       io.disconnect();
       document.removeEventListener("visibilitychange", onVisibility);
-      pointerHost.removeEventListener("pointermove", onPointerMove);
-      pointerHost.removeEventListener("pointerleave", onPointerLeave);
+      if (mouseInteraction) {
+        pointerHost.removeEventListener("pointermove", onPointerMove);
+        pointerHost.removeEventListener("pointerleave", onPointerLeave);
+      }
       ctxMap.delete(container);
       try {
         container.removeChild(canvas);
