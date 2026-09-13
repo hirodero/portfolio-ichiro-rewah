@@ -514,62 +514,80 @@
     right: auto;
     width: 100vw;
     transform: translateX(-50%);
-    filter: brightness(0.68) saturate(0.78);
+    filter: none;
+    background:
+      radial-gradient(ellipse 92% 62% at 74% 18%, #6d3dff55 0%, transparent 60%),
+      radial-gradient(ellipse 72% 50% at 18% 62%, #ff9ffc36 0%, transparent 64%),
+      radial-gradient(ellipse 52% 40% at 80% 82%, #5227ff33 0%, transparent 58%);
     -webkit-mask-image: linear-gradient(
       to bottom,
       transparent 0%,
-      #000 16%,
-      #000 68%,
+      #000 14%,
+      #000 74%,
       transparent 100%
     );
     mask-image: linear-gradient(
       to bottom,
       transparent 0%,
-      #000 16%,
-      #000 68%,
+      #000 14%,
+      #000 74%,
       transparent 100%
     );
   }
 
-  .portrait-aurora { inset: -58px -16px; }
+  .portrait-aurora { inset: -40px -12px; }
 
   .about-copy .portrait-aurora,
   .about-copy .aura-splash-cursor {
     inset: auto;
-    top: -80px;
-    bottom: -88px;
+    top: -48px;
+    bottom: -56px;
     left: 50%;
     width: 100vw;
     transform: translateX(-50%);
-    filter: brightness(0.78) saturate(0.8);
-    opacity: 0.8;
+    filter: none;
+    opacity: 0.88;
+    mix-blend-mode: screen;
+    background: radial-gradient(ellipse 72% 58% at 38% 38%, #9654ec40 0%, #59c95d18 46%, transparent 72%);
     -webkit-mask-image: linear-gradient(
       to bottom,
       transparent 0%,
-      #000 14%,
-      #000 72%,
+      #000 12%,
+      #000 78%,
       transparent 100%
     );
     mask-image: linear-gradient(
       to bottom,
       transparent 0%,
-      #000 14%,
-      #000 72%,
+      #000 12%,
+      #000 78%,
       transparent 100%
     );
   }
 
-  .about-copy .aurora-purple { opacity: .62; }
-  .about-copy .aurora-violet { opacity: .34; }
-  .about-copy .aurora-cursor-splash { opacity: .16; }
+  .about-copy .portrait-aurora svg,
+  .about-copy .aurora-cursor-splash,
+  .about-copy .aurora-ribbon {
+    display: none;
+  }
 
   .about-copy,
   .about-toolkit {
     max-width: 100%;
     min-width: 0;
   }
-  .about-copy { margin-top: -8px; }
-  .about-copy h2 { margin-bottom: 22px; }
+  .about-copy { margin-top: 0; }
+  .about-copy h2 {
+    margin-bottom: 20px;
+    letter-spacing: -0.35px;
+    word-spacing: 0.08em;
+    line-height: 1.22;
+  }
+  .about-copy > p {
+    letter-spacing: 0.01em;
+    word-spacing: 0.045em;
+    line-height: 1.75;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

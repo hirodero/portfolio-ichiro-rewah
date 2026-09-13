@@ -66,8 +66,10 @@
   opacity: 1;
 }
 
-.paimon-wind.has-original .flying-paimon img {
-  mix-blend-mode: screen;
+@media (max-width: 700px) {
+  .paimon-portal { display: none; }
+  .paimon-star:nth-child(n+4),
+  .paimon-star-spark { display: none; }
 }
 
 .paimon-scarf-sparkles {

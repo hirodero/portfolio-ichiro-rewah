@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { skipGpuFx } from "@/lib/device";
 import ProfileCard from "./ProfileCard";
 import DriftWall from "./DriftWall";
 import "./AboutProfile.css";
@@ -41,8 +42,11 @@ export default function AboutProfile() {
     const update = () => setTiltEnabled(preference.matches);
     update();
     preference.addEventListener("change", update);
-    const isLite = window.self !== window.top || new URLSearchParams(window.location.search).has("preview");
+    const isLite = skipGpuFx()
+      || window.self !== window.top
+      || new URLSearchParams(window.location.search).has("preview");
     setShowDrift(!isLite);
+    if (isLite) return () => preference.removeEventListener("change", update);
 
     const warm = () => {
       DRIFT_ITEMS.forEach(({ image }) => {
