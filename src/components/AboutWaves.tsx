@@ -19,43 +19,25 @@ export default function AboutWaves() {
       setIsReady(true);
     };
 
-    const tryWarm = () => {
-      if (isHeroFocused()) return;
-      warm();
-    };
-
-    const onIntent = () => {
-      if (typeof window.requestIdleCallback === "function") {
-        idleId = window.requestIdleCallback(tryWarm, { timeout: 900 });
-        return;
-      }
-      timeoutId = window.setTimeout(tryWarm, 280);
-    };
-
-    const links = document.querySelectorAll('a[href="#about"]');
-    links.forEach((link) => {
-      link.addEventListener("pointerenter", onIntent, { once: true });
-      link.addEventListener("focus", onIntent, { once: true });
-    });
+    if (typeof window.requestIdleCallback === "function") {
+      idleId = window.requestIdleCallback(warm, { timeout: 280 });
+    } else {
+      timeoutId = window.setTimeout(warm, 80);
+    }
 
     const about = document.getElementById("about");
     const io = about
       ? new IntersectionObserver(([entry]) => {
-          if (entry.intersectionRatio >= 0.08) tryWarm();
-        }, { threshold: [0, 0.08, 0.2] })
+          if (entry.isIntersecting) warm();
+        }, { rootMargin: "60% 0px", threshold: 0 })
       : null;
     if (about && io) io.observe(about);
 
     const unsub = subscribeHeroLive(() => {
       setHeroFocused(isHeroFocused());
-      tryWarm();
     });
 
     return () => {
-      links.forEach((link) => {
-        link.removeEventListener("pointerenter", onIntent);
-        link.removeEventListener("focus", onIntent);
-      });
       io?.disconnect();
       unsub();
       if (idleId) window.cancelIdleCallback?.(idleId);

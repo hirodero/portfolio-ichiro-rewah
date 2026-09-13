@@ -290,10 +290,10 @@ const GradientWaves = ({
 
     const io = new IntersectionObserver(
       ([entry]) => {
-        isVisible = entry.intersectionRatio >= 0.22;
+        isVisible = entry.isIntersecting;
         isVisible ? tryStart() : tryStop();
       },
-      { threshold: [0, 0.22, 0.45] }
+      { rootMargin: "45% 0px", threshold: [0, 0.01, 0.15] }
     );
     io.observe(container);
 

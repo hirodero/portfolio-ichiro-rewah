@@ -330,6 +330,10 @@
   z-index: 0;
   pointer-events: none;
   transform: translateX(-50%);
+  background:
+    radial-gradient(ellipse 78% 62% at 58% 36%, #5227ff6b 0%, transparent 58%),
+    radial-gradient(ellipse 54% 48% at 44% 48%, #ff9ffc3d 0%, transparent 64%),
+    radial-gradient(ellipse 42% 38% at 72% 28%, #652bea52 0%, transparent 56%);
   -webkit-mask-image: linear-gradient(
     to bottom,
     transparent 0%,
@@ -405,6 +409,7 @@
   z-index: -1;
   opacity: .92;
   mix-blend-mode: screen;
+  background: radial-gradient(ellipse 58% 52% at 50% 42%, #9654ec55 0%, #59c95d22 46%, transparent 72%);
   mask-image: radial-gradient(ellipse 50% 50% at center, #000 42%, #000b 66%, transparent 98%);
 }
 .about-copy .portrait-aurora svg {

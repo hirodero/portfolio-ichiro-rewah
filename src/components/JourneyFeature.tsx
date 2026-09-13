@@ -26,8 +26,9 @@ export default function JourneyFeature({ item }: JourneyFeatureProps) {
   const proof = item.proofMedia?.[0];
 
   useEffect(() => {
-    const host = cardRef.current;
-    if (!host) return;
+    const card = cardRef.current;
+    if (!card) return;
+    const host: HTMLElement = card;
 
     if (window.matchMedia("(prefers-reduced-motion: reduce), (pointer: coarse)").matches) {
       return;
