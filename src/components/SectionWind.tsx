@@ -56,6 +56,18 @@ function rocket(local: number, xAmp: number, dipAmp: number, liftAmp: number) {
   };
 }
 
+function swing(local: number, xAmp: number, dipAmp: number, liftAmp: number) {
+  if (local <= 0) return { x: 0, y: 0 };
+
+  const eased = local * local * (3 - 2 * local);
+  const dip = Math.sin(Math.min(eased / 0.24, 1) * Math.PI);
+  const lift = Math.pow(Math.max(0, eased - 0.1), 1.38);
+  return {
+    x: xAmp * eased,
+    y: dipAmp * dip - liftAmp * lift
+  };
+}
+
 function pick(host: HTMLElement, selector: string) {
   return Array.from(host.querySelectorAll<HTMLElement>(selector));
 }
@@ -70,6 +82,17 @@ const ABOUT_GROUPS = [
   { selector: ".about-toolkit-label", delay: 0.1 },
   { selector: ".icon-motion-item", delay: 0.06 },
   { selector: ".about-toolkit-capabilities", delay: 0.14 }
+];
+
+const ABOUT_GROUPS_MOBILE = [
+  { selector: ".about-kicker", delay: 0 },
+  { selector: ".about-profile-card", delay: 0.05 },
+  { selector: ".about-copy > h2", delay: 0.06 },
+  { selector: ".about-copy > p", delay: 0.1 },
+  { selector: ".about-details", delay: 0.14 },
+  { selector: ".about-toolkit-label", delay: 0.1 },
+  { selector: ".about-toolkit-icons", delay: 0.12 },
+  { selector: ".about-toolkit-capabilities", delay: 0.16 }
 ];
 
 const HERO_GROUPS = [
@@ -95,20 +118,21 @@ export default function SectionWind({ children, variant = "about" }: SectionWind
       : hostRef.current?.closest(".about-section");
     if (!(host instanceof HTMLElement)) return undefined;
     if (window.self !== window.top || new URLSearchParams(window.location.search).has("preview")) return undefined;
-    if (window.matchMedia("(max-width: 700px)").matches) return undefined;
 
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const compact = () => window.innerWidth <= 700;
     const amps = () => {
       const small = compact();
       return {
-        x: small ? 28 : 62,
-        dip: small ? 48 : 108,
-        lift: small ? 120 : 236
+        x: small ? 22 : 62,
+        dip: small ? 36 : 108,
+        lift: small ? 96 : 236
       };
     };
 
-    const groups = variant === "hero" ? HERO_GROUPS : ABOUT_GROUPS;
+    const groups = variant === "about" && compact()
+      ? ABOUT_GROUPS_MOBILE
+      : variant === "hero" ? HERO_GROUPS : ABOUT_GROUPS;
     const pieces: Piece[] = [];
     const seen = new Set<HTMLElement>();
     let lane = 0;
@@ -136,6 +160,7 @@ export default function SectionWind({ children, variant = "about" }: SectionWind
     let lastY = window.scrollY;
     let goingDown = true;
     let downLock = 0;
+    let shownFly = 0;
 
     const noteDirection = () => {
       const y = Math.max(0, window.scrollY);
@@ -165,10 +190,11 @@ export default function SectionWind({ children, variant = "about" }: SectionWind
       }
 
       const box = host.getBoundingClientRect();
-      const leaving = box.bottom <= fold + 12;
-      if (!leaving || !goingDown) return { fly: 0, returning: true };
-      const travel = fold + 12 - box.bottom;
-      return { fly: clamp(travel / (fold * 0.32)), returning: false };
+      const startAt = small ? 56 : 32;
+      const origin = fold + startAt;
+      if (box.bottom > origin || !goingDown) return { fly: 0, returning: true };
+      const peakAt = fold * (small ? 0.52 : 0.4);
+      return { fly: clamp((origin - box.bottom) / peakAt), returning: false };
     };
 
     const styleOf = (piece: Piece) => {
@@ -179,7 +205,11 @@ export default function SectionWind({ children, variant = "about" }: SectionWind
     const apply = (piece: Piece, next: string) => {
       piece.el.style.translate = next;
       if (!piece.keepTransform) piece.el.style.transform = "";
-      piece.el.style.willChange = next ? "translate" : "";
+      if (next) {
+        if (piece.el.style.willChange !== "translate") piece.el.style.willChange = "translate";
+      } else if (piece.el.style.willChange) {
+        piece.el.style.willChange = "";
+      }
     };
 
     const clear = (piece: Piece) => {
@@ -199,8 +229,17 @@ export default function SectionWind({ children, variant = "about" }: SectionWind
     const tick = (now: number) => {
       const dt = last ? Math.min(0.032, (now - last) / 1000) : 0.016;
       last = now;
-      const scroll = motion.matches ? { fly: 0, returning: false } : readScroll();
+      const raw = motion.matches ? { fly: 0, returning: false } : readScroll();
+      if (variant === "about") {
+        const tau = raw.returning ? 0.045 : 0.12;
+        shownFly += (raw.fly - shownFly) * (1 - Math.exp(-dt / tau));
+        if (shownFly < 0.002) shownFly = 0;
+      } else {
+        shownFly = raw.fly;
+      }
+      const scroll = { fly: shownFly, returning: raw.returning };
       const size = amps();
+      const mobile = compact();
       let busy = false;
 
       for (const piece of pieces) {
@@ -216,29 +255,33 @@ export default function SectionWind({ children, variant = "about" }: SectionWind
           piece.x.v *= 0.22;
           piece.y.v *= 0.22;
           piece.kicked = false;
-        } else if (!piece.kicked && local > 0.02 && scroll.fly > prevFly) {
-          const punch = compact() ? 2.2 : 5.2;
-          piece.y.v += size.dip * punch;
-          piece.x.v += piece.xLane * size.x * (compact() ? 0.9 : 1.8);
+        } else if (variant === "hero" && !mobile && !piece.kicked && local > 0.02 && scroll.fly > prevFly) {
+          piece.y.v += size.dip * 5.2;
+          piece.x.v += piece.xLane * size.x * 1.8;
           piece.kicked = true;
         }
 
         const target = scroll.returning || local === 0
           ? { x: 0, y: 0 }
-          : rocket(local, piece.xLane * size.x, size.dip, size.lift);
+          : variant === "hero"
+            ? rocket(local, piece.xLane * size.x, size.dip, size.lift)
+            : swing(local, piece.xLane * size.x, size.dip, size.lift);
 
-        const mobile = compact();
-        const stiffness = scroll.returning ? (mobile ? 18 : 20) : (mobile ? 8.2 : 10.2);
-        const damping = scroll.returning ? (mobile ? 9.2 : 8.4) : (mobile ? 4.6 : 3.5);
+        const stiffness = scroll.returning ? (mobile ? 18 : 20) : (mobile ? 7.4 : variant === "about" ? 8.4 : 10.2);
+        const damping = scroll.returning ? (mobile ? 9.2 : 8.4) : (mobile ? 5.2 : variant === "about" ? 4.4 : 3.5);
+        const yStiff = scroll.returning ? (mobile ? 19 : 22) : (mobile ? 8.2 : variant === "about" ? 9.2 : 11);
         const movingX = stepSpring(piece.x, target.x, dt, stiffness, damping);
-        const movingY = stepSpring(piece.y, target.y, dt, scroll.returning ? (mobile ? 19 : 22) : (mobile ? 9 : 11), damping);
+        const movingY = stepSpring(piece.y, target.y, dt, yStiff, damping);
         apply(piece, styleOf(piece));
         busy ||= movingX || movingY || scroll.fly > 0;
       }
 
       prevFly = scroll.fly;
       raf = busy ? requestAnimationFrame(tick) : 0;
-      if (!busy) last = 0;
+      if (!busy) {
+        last = 0;
+        shownFly = 0;
+      }
     };
 
     const kick = () => {
